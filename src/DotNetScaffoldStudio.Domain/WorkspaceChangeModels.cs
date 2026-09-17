@@ -24,3 +24,7 @@ public sealed record ExecutionDifferenceSummary(
     IReadOnlyList<GitFileChange> ExistingGitChanges,
     IReadOnlyList<GitFileChange> CurrentGitChanges,
     IReadOnlyList<FileChange> CommandFileChanges);
+
+public sealed record CommandExecutionResult(
+    CommandResult Command,
+    ExecutionDifferenceSummary? Differences);

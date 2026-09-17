@@ -8,10 +8,10 @@ public sealed class ValidatedProjectCommandExecutorTests
     [Fact]
     public async Task ExecuteAsync_WhenProjectMovedDoesNotStartCommand()
     {
-        var runner = new RecordingRunner();
+        var workflow = new RecordingWorkflow();
         var executor = new ValidatedProjectCommandExecutor(
             new RejectedValidator(),
-            new CommandCoordinator(runner));
+            workflow);
         var request = new CommandRequest(
             "dotnet",
             [new CommandArgument("new")],
@@ -28,7 +28,7 @@ public sealed class ValidatedProjectCommandExecutorTests
                 CancellationToken.None));
 
         Assert.Contains("移動", exception.Message, StringComparison.Ordinal);
-        Assert.Equal(0, runner.InvocationCount);
+        Assert.Equal(0, workflow.InvocationCount);
     }
 
     private sealed class RejectedValidator : ITargetProjectValidator
@@ -37,18 +37,19 @@ public sealed class ValidatedProjectCommandExecutorTests
             new(false, "目標專案已移動，請重新掃描。");
     }
 
-    private sealed class RecordingRunner : ICommandRunner
+    private sealed class RecordingWorkflow : ICommandExecutionWorkflow
     {
         public int InvocationCount { get; private set; }
 
-        public Task<CommandResult> RunAsync(
+        public Task<CommandExecutionResult> ExecuteAsync(
+            string workspaceRoot,
             CommandRequest request,
             IProgress<CommandOutputLine>? progress,
             CancellationToken cancellationToken)
         {
             InvocationCount++;
             var now = DateTimeOffset.UtcNow;
-            return Task.FromResult(new CommandResult(0, now, now, [], []));
+            return Task.FromResult(new CommandExecutionResult(new CommandResult(0, now, now, [], []), null));
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using DotNetScaffoldStudio.Application;
 using DotNetScaffoldStudio.Domain;
 
@@ -7,7 +8,16 @@ public sealed class GitStatusService(ICommandRunner runner, string gitExecutable
 {
     public async Task<GitWorkspaceState> GetStatusAsync(string workspaceRoot, CancellationToken cancellationToken)
     {
-        var repositoryCheck = await RunAsync(workspaceRoot, ["rev-parse", "--is-inside-work-tree"], cancellationToken);
+        CommandResult repositoryCheck;
+        try
+        {
+            repositoryCheck = await RunAsync(workspaceRoot, ["rev-parse", "--is-inside-work-tree"], cancellationToken);
+        }
+        catch (Win32Exception)
+        {
+            return new GitWorkspaceState(false, null, []);
+        }
+
         if (!repositoryCheck.Succeeded ||
             !repositoryCheck.StandardOutput.Any(line => string.Equals(line.Trim(), "true", StringComparison.OrdinalIgnoreCase)))
         {

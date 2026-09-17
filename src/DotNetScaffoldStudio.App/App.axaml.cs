@@ -18,6 +18,16 @@ public sealed partial class App : Avalonia.Application
         var services = new ServiceCollection();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
         services.AddSingleton<IDemoExecutionService, DemoExecutionService>();
+        services.AddSingleton<ICommandRunner, ProcessCommandRunner>();
+        services.AddSingleton<CommandCoordinator>();
+        services.AddSingleton<IGitStatusService>(provider =>
+            new GitStatusService(provider.GetRequiredService<ICommandRunner>()));
+        services.AddSingleton<IFileSnapshotService, FileSnapshotService>();
+        services.AddSingleton<ICommandExecutionWorkflow, CommandExecutionWorkflow>();
+        services.AddSingleton<IDotNetEnvironmentDiscovery>(provider =>
+            new DotNetEnvironmentDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
+        services.AddSingleton<ITargetProjectValidator, TargetProjectValidator>();
+        services.AddTransient<ValidatedProjectCommandExecutor>();
         services.AddTransient<MainWindowViewModel>();
         _serviceProvider = services.BuildServiceProvider();
 

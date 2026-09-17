@@ -6,9 +6,9 @@ public sealed class TargetProjectInvalidException(string message) : InvalidOpera
 
 public sealed class ValidatedProjectCommandExecutor(
     ITargetProjectValidator targetValidator,
-    CommandCoordinator coordinator)
+    ICommandExecutionWorkflow executionWorkflow)
 {
-    public Task<CommandResult> ExecuteAsync(
+    public Task<CommandExecutionResult> ExecuteAsync(
         string workspaceRoot,
         string projectPath,
         CommandRequest request,
@@ -21,6 +21,6 @@ public sealed class ValidatedProjectCommandExecutor(
             throw new TargetProjectInvalidException(validation.ErrorMessage ?? "目標專案無效。");
         }
 
-        return coordinator.ExecuteAsync(request, progress, cancellationToken);
+        return executionWorkflow.ExecuteAsync(workspaceRoot, request, progress, cancellationToken);
     }
 }

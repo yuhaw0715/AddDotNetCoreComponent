@@ -23,6 +23,20 @@ public interface ICommandRunner
         CancellationToken cancellationToken);
 }
 
+public interface ICommandExecutionWorkflow
+{
+    Task<CommandExecutionResult> ExecuteAsync(
+        string workspaceRoot,
+        CommandRequest request,
+        IProgress<CommandOutputLine>? progress,
+        CancellationToken cancellationToken);
+}
+
+public interface IDotNetEnvironmentDiscovery
+{
+    Task<DotNetEnvironmentSnapshot> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);
+}
+
 public interface ITargetProjectValidator
 {
     TargetValidationResult Validate(string workspaceRoot, string projectPath, string commandWorkingDirectory);

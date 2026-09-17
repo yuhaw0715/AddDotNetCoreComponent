@@ -189,11 +189,23 @@ public sealed record CommandResult
         DateTimeOffset completedAt,
         IReadOnlyList<string> standardOutput,
         IReadOnlyList<string> standardError,
-        bool wasCancelled = false)
+        bool wasCancelled = false,
+        bool gracefulTerminationAttempted = false,
+        bool wasForceTerminated = false)
     {
         if (completedAt < startedAt)
         {
             throw new ArgumentException("完成時間不得早於開始時間。", nameof(completedAt));
+        }
+
+        if (gracefulTerminationAttempted && !wasCancelled)
+        {
+            throw new ArgumentException("只有取消中的命令才能嘗試正常終止。", nameof(gracefulTerminationAttempted));
+        }
+
+        if (wasForceTerminated && !gracefulTerminationAttempted)
+        {
+            throw new ArgumentException("強制終止前必須先嘗試正常終止。", nameof(wasForceTerminated));
         }
 
         ExitCode = exitCode;
@@ -202,6 +214,8 @@ public sealed record CommandResult
         StandardOutput = Array.AsReadOnly(standardOutput.ToArray());
         StandardError = Array.AsReadOnly(standardError.ToArray());
         WasCancelled = wasCancelled;
+        GracefulTerminationAttempted = gracefulTerminationAttempted;
+        WasForceTerminated = wasForceTerminated;
     }
 
     public int ExitCode { get; }
@@ -210,5 +224,7 @@ public sealed record CommandResult
     public IReadOnlyList<string> StandardOutput { get; }
     public IReadOnlyList<string> StandardError { get; }
     public bool WasCancelled { get; }
+    public bool GracefulTerminationAttempted { get; }
+    public bool WasForceTerminated { get; }
     public bool Succeeded => ExitCode == 0 && !WasCancelled;
 }

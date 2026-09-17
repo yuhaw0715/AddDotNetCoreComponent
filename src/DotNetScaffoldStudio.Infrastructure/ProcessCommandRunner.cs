@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using DotNetScaffoldStudio.Application;
 using DotNetScaffoldStudio.Domain;
@@ -13,6 +14,7 @@ public sealed class ProcessCommandRunner : ICommandRunner
         IProgress<CommandOutputLine>? progress,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!Directory.Exists(request.WorkingDirectory))
         {
             throw new DirectoryNotFoundException($"找不到工作目錄：{request.WorkingDirectory}");
@@ -25,6 +27,7 @@ public sealed class ProcessCommandRunner : ICommandRunner
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
             CreateNoWindow = true
         };
 
@@ -53,6 +56,8 @@ public sealed class ProcessCommandRunner : ICommandRunner
         var stderrTask = DrainAsync(process.StandardError, CommandOutputStream.StandardError, stderr, redactor, progress);
         var waitTask = process.WaitForExitAsync(CancellationToken.None);
         var wasCancelled = false;
+        var gracefulTerminationAttempted = false;
+        var wasForceTerminated = false;
 
         try
         {
@@ -63,11 +68,25 @@ public sealed class ProcessCommandRunner : ICommandRunner
             wasCancelled = true;
             if (!process.HasExited)
             {
+                gracefulTerminationAttempted = true;
+                process.StandardInput.Close();
                 _ = process.CloseMainWindow();
                 var completed = await Task.WhenAny(waitTask, Task.Delay(GracefulShutdownTimeout, CancellationToken.None));
                 if (completed != waitTask && !process.HasExited)
                 {
-                    process.Kill(entireProcessTree: true);
+                    try
+                    {
+                        process.Kill(entireProcessTree: true);
+                        wasForceTerminated = true;
+                    }
+                    catch (InvalidOperationException) when (process.HasExited)
+                    {
+                        // The process exited between the liveness check and the kill request.
+                    }
+                    catch (Win32Exception) when (process.HasExited)
+                    {
+                        // The process exited between the liveness check and the kill request.
+                    }
                 }
             }
 
@@ -81,7 +100,9 @@ public sealed class ProcessCommandRunner : ICommandRunner
             DateTimeOffset.UtcNow,
             stdout,
             stderr,
-            wasCancelled);
+            wasCancelled,
+            gracefulTerminationAttempted,
+            wasForceTerminated);
     }
 
     private static async Task DrainAsync(

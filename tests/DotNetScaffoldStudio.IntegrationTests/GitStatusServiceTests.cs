@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using DotNetScaffoldStudio.Application;
 using DotNetScaffoldStudio.Domain;
 using DotNetScaffoldStudio.Infrastructure;
@@ -47,6 +48,18 @@ public sealed class GitStatusServiceTests
         Assert.Single(runner.Commands);
     }
 
+    [Fact]
+    public async Task GetStatusAsync_WhenGitCannotStartReturnsNonRepository()
+    {
+        var service = new GitStatusService(new UnavailableRunner());
+
+        var state = await service.GetStatusAsync("/tmp", CancellationToken.None);
+
+        Assert.False(state.IsRepository);
+        Assert.Null(state.Branch);
+        Assert.Empty(state.Changes);
+    }
+
     private static CommandResult Result(int exitCode, IReadOnlyList<string> stdout, IReadOnlyList<string>? stderr = null)
     {
         var now = DateTimeOffset.UtcNow;
@@ -66,5 +79,14 @@ public sealed class GitStatusServiceTests
             Commands.Add(request);
             return Task.FromResult(_results.Dequeue());
         }
+    }
+
+    private sealed class UnavailableRunner : ICommandRunner
+    {
+        public Task<CommandResult> RunAsync(
+            CommandRequest request,
+            IProgress<CommandOutputLine>? progress,
+            CancellationToken cancellationToken) =>
+            Task.FromException<CommandResult>(new Win32Exception("git executable unavailable"));
     }
 }
