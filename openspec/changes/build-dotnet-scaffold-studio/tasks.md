@@ -1,36 +1,36 @@
 ## 1. 建立 Solution 與工程基礎
 
-- [ ] 1.1 建立 .NET 10 Solution，以及 App、Application、Domain、Infrastructure 四個 `src` 專案，並以 `dotnet build` 驗證全部專案可建置。
-- [ ] 1.2 建立 UnitTests、IntegrationTests、UiTests 三個 `tests` 專案及正確專案參考，並以 `dotnet test` 驗證空白測試基線通過。
-- [ ] 1.3 加入 Avalonia、CommunityToolkit.Mvvm、Microsoft.Extensions.DependencyInjection 與必要的測試套件，並以 restore/build 驗證套件版本與 .NET 10 相容。
-- [ ] 1.4 設定 nullable、implicit usings、分析器、警告政策與統一格式規則，並以建置無新增警告及格式檢查通過驗證。
-- [ ] 1.5 建立 App 組合根與單向專案相依，並以架構測試驗證 Domain/Application 不參考 Avalonia、Infrastructure 或作業系統實作。
+- [x] 1.1 建立 .NET 10 Solution，以及 App、Application、Domain、Infrastructure 四個 `src` 專案，並以 `dotnet build` 驗證全部專案可建置。
+- [x] 1.2 建立 UnitTests、IntegrationTests、UiTests 三個 `tests` 專案及正確專案參考，並以 `dotnet test` 驗證空白測試基線通過。
+- [x] 1.3 加入 Avalonia、CommunityToolkit.Mvvm、Microsoft.Extensions.DependencyInjection 與必要的測試套件，並以 restore/build 驗證套件版本與 .NET 10 相容。
+- [x] 1.4 設定 nullable、implicit usings、分析器、警告政策與統一格式規則，並以建置無新增警告及格式檢查通過驗證。
+- [x] 1.5 建立 App 組合根與單向專案相依，並以架構測試驗證 Domain/Application 不參考 Avalonia、Infrastructure 或作業系統實作。
 
 ## 2. 建立核心模型與官方功能目錄
 
-- [ ] 2.1 建立功能定義、參數 schema、平台相容性、相依條件、風險層級及命令結果等不可變領域模型，並以單元測試驗證有效與無效組合。
-- [ ] 2.2 建立 .NET 10 官方 `dotnet new` 基準資料，涵蓋規格列出的 46 個短名稱/別名，並以資料完整性測試驗證無遺漏、重複或未知群組。
-- [ ] 2.3 建立八種 ASP.NET Core Scaffolding 產生器及 Blazor/Razor 子範本的功能定義，並以 snapshot 測試驗證命令、必要參數與群組。
-- [ ] 2.4 建立規格內 EF Core 功能定義並排除 `database drop`，以單元測試驗證所有允許/禁止功能及其風險等級。
-- [ ] 2.5 實作官方基準與本機能力合併規則，並以 fixture 測試驗證可用、缺少、版本不相容及未知範本狀態。
+- [x] 2.1 建立功能定義、參數 schema、平台相容性、相依條件、風險層級及命令結果等不可變領域模型，並以單元測試驗證有效與無效組合。
+- [x] 2.2 建立 .NET 10 官方 `dotnet new` 基準資料，涵蓋規格列出的 46 個短名稱/別名，並以資料完整性測試驗證無遺漏、重複或未知群組。
+- [x] 2.3 建立八種 ASP.NET Core Scaffolding 產生器及 Blazor/Razor 子範本的功能定義，並以 snapshot 測試驗證命令、必要參數與群組。
+- [x] 2.4 建立規格內 EF Core 功能定義並排除 `database drop`，以單元測試驗證所有允許/禁止功能及其風險等級。
+- [x] 2.5 實作官方基準與本機能力合併規則，並以 fixture 測試驗證可用、缺少、版本不相容及未知範本狀態。
 
 ## 3. 實作安全 CLI 基礎設施
 
-- [ ] 3.1 實作結構化 `CommandRequest` 建構與預覽格式化，並以包含空白、引號、Unicode 與 shell 特殊字元的測試驗證執行引數不經字串重解析。
-- [ ] 3.2 以 `ProcessStartInfo.ArgumentList` 實作非 shell 程序執行器，並以整合測試驗證 stdout/stderr 同步串流、結束碼與大量輸出不死鎖。
-- [ ] 3.3 實作單一修改命令協調器與唯讀偵測併發限制，並以併發測試驗證第二個修改命令會被拒絕且狀態可恢復。
+- [x] 3.1 實作結構化 `CommandRequest` 建構與預覽格式化，並以包含空白、引號、Unicode 與 shell 特殊字元的測試驗證執行引數不經字串重解析。
+- [x] 3.2 以 `ProcessStartInfo.ArgumentList` 實作非 shell 程序執行器，並以整合測試驗證 stdout/stderr 同步串流、結束碼與大量輸出不死鎖。
+- [x] 3.3 實作單一修改命令協調器與唯讀偵測併發限制，並以併發測試驗證第二個修改命令會被拒絕且狀態可恢復。
 - [ ] 3.4 實作取消、正常終止及必要時終止程序樹的流程，並以長時間測試程序驗證取消結果與殘留檔案重新掃描。
-- [ ] 3.5 實作機密引數標記及預覽、歷程、日誌與錯誤遮蔽，並以含連線字串/Token 的測試驗證任何輸出皆不含原值。
-- [ ] 3.6 實作集中式風險政策與一次性確認 token，並以單元測試驗證參數變更會使舊確認失效，覆寫、移除 Migration、資料庫更新及安裝均需確認。
+- [x] 3.5 實作機密引數標記及預覽、歷程、日誌與錯誤遮蔽，並以含連線字串/Token 的測試驗證任何輸出皆不含原值。
+- [x] 3.6 實作集中式風險政策與一次性確認 token，並以單元測試驗證參數變更會使舊確認失效，覆寫、移除 Migration、資料庫更新及安裝均需確認。
 
 ## 4. 工作區、專案與差異偵測
 
-- [ ] 4.1 實作資料夾、`.sln`、`.slnx` 選擇結果解析與路徑正規化，並以越界、symlink、遺失與無權限案例測試工作區邊界。
-- [ ] 4.2 實作 `.csproj` 遞迴探索並排除 `.git`、`bin`、`obj` 等目錄，以多專案 fixture 驗證名稱、相對路徑、SDK 類型及 TFM 顯示資料。
-- [ ] 4.3 實作目標專案選擇及執行前重新驗證，並以專案在載入後被移動/刪除的測試驗證命令不會啟動。
-- [ ] 4.4 實作 Git 分支與 porcelain 狀態 adapter，並以乾淨、dirty、未追蹤及非 Git 工作區 fixture 驗證結果。
-- [ ] 4.5 實作排除大型輸出目錄的檔案 metadata snapshot 與前後差異，並以新增、修改、刪除及取消後部分輸出測試驗證摘要。
-- [ ] 4.6 實作結果彙整，區分執行前既有 Git 變更與執行後新增差異，並以整合測試驗證不會執行 commit、stash、reset 或自動回復。
+- [x] 4.1 實作資料夾、`.sln`、`.slnx` 選擇結果解析與路徑正規化，並以越界、symlink、遺失與無權限案例測試工作區邊界。
+- [x] 4.2 實作 `.csproj` 遞迴探索並排除 `.git`、`bin`、`obj` 等目錄，以多專案 fixture 驗證名稱、相對路徑、SDK 類型及 TFM 顯示資料。
+- [x] 4.3 實作目標專案選擇及執行前重新驗證，並以專案在載入後被移動/刪除的測試驗證命令不會啟動。
+- [x] 4.4 實作 Git 分支與 porcelain 狀態 adapter，並以乾淨、dirty、未追蹤及非 Git 工作區 fixture 驗證結果。
+- [x] 4.5 實作排除大型輸出目錄的檔案 metadata snapshot 與前後差異，並以新增、修改、刪除及取消後部分輸出測試驗證摘要。
+- [x] 4.6 實作結果彙整，區分執行前既有 Git 變更與執行後新增差異，並以整合測試驗證不會執行 commit、stash、reset 或自動回復。
 
 ## 5. 執行階段探索與相依性管理
 

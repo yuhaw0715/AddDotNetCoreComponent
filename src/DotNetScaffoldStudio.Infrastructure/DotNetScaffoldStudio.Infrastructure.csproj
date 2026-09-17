@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../DotNetScaffoldStudio.Application/DotNetScaffoldStudio.Application.csproj" />
+    <ProjectReference Include="../DotNetScaffoldStudio.Domain/DotNetScaffoldStudio.Domain.csproj" />
+  </ItemGroup>
+</Project>

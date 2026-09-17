@@ -1,0 +1,43 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DotNetScaffoldStudio.App.App"
+             RequestedThemeVariant="Light">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://DotNetScaffoldStudio.App/Resources/Strings.zh-TW.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <Color x:Key="BrandColor">#6D5DFB</Color>
+      <SolidColorBrush x:Key="BrandBrush" Color="{StaticResource BrandColor}" />
+      <SolidColorBrush x:Key="SurfaceBrush" Color="#F6F7FB" />
+      <SolidColorBrush x:Key="LineBrush" Color="#E4E7EC" />
+      <SolidColorBrush x:Key="TextBrush" Color="#182230" />
+      <SolidColorBrush x:Key="MutedBrush" Color="#667085" />
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource BrandBrush}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="18,10" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="14,9" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="MinHeight" Value="38" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="MinHeight" Value="38" />
+    </Style>
+  </Application.Styles>
+</Application>

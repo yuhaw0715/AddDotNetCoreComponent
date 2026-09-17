@@ -1,0 +1,273 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:domain="using:DotNetScaffoldStudio.Domain"
+        xmlns:vm="using:DotNetScaffoldStudio.Application"
+        x:Class="DotNetScaffoldStudio.App.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{DynamicResource AppTitle}"
+        Width="1360"
+        Height="860"
+        MinWidth="1120"
+        MinHeight="720"
+        Background="#F6F7FB"
+        WindowStartupLocation="CenterScreen">
+  <Grid RowDefinitions="72,*">
+    <Border Grid.Row="0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="24,0">
+      <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <Border Width="38" Height="38" CornerRadius="10" Background="{DynamicResource BrandBrush}">
+            <TextBlock Text=".N" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel Spacing="1">
+            <TextBlock Text="{DynamicResource AppTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+            <TextBlock Text="{DynamicResource AppSubtitle}" FontSize="12" Foreground="{DynamicResource MutedBrush}" />
+          </StackPanel>
+        </StackPanel>
+        <Border Grid.Column="2" CornerRadius="16" Background="#ECFDF3" Padding="12,6">
+          <StackPanel Orientation="Horizontal" Spacing="7">
+            <Ellipse Width="8" Height="8" Fill="#12B76A" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#027A48" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="270,370,*">
+      <Border Grid.Column="0" Background="#121826" Padding="16,20">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{DynamicResource WorkspaceLabel}" Foreground="#98A2B3" FontSize="11" FontWeight="SemiBold" />
+            <Border Background="#1D2939" CornerRadius="8" Padding="11">
+              <TextBlock Text="{Binding WorkspacePath}" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="2" FontSize="12" />
+            </Border>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+              <Button Grid.Column="0" Classes="secondary" Content="{DynamicResource ChooseWorkspace}" Click="ChooseWorkspace_OnClick" FontSize="12" />
+              <Button Grid.Column="1" Classes="secondary" Content="示範資料" Command="{Binding UseDemoWorkspaceCommand}" FontSize="12" />
+            </Grid>
+          </StackPanel>
+
+          <Border Grid.Row="1" Margin="0,18,0,14" Height="1" Background="#344054" />
+
+          <ListBox Grid.Row="2"
+                   ItemsSource="{Binding NavigationItems}"
+                   SelectedItem="{Binding SelectedNavigation}"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   SelectionMode="Single">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="12,11" />
+                <Setter Property="Margin" Value="0,2" />
+                <Setter Property="CornerRadius" Value="8" />
+              </Style>
+              <Style Selector="ListBoxItem:selected">
+                <Setter Property="Background" Value="#344054" />
+              </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="domain:NavigationItem">
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="SemiBold" FontSize="14" />
+                  <TextBlock Text="{Binding Subtitle}" Foreground="#98A2B3" FontSize="11" TextWrapping="Wrap" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <Border Grid.Row="3" Background="#1D2939" CornerRadius="8" Padding="12">
+            <StackPanel Spacing="4">
+              <TextBlock Text="DEMO SAFE MODE" Foreground="#BDB4FE" FontWeight="Bold" FontSize="11" />
+              <TextBlock Text="所有執行皆為模擬，不會修改檔案或資料庫。" Foreground="#D0D5DD" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <Border Grid.Column="1" Background="#F9FAFB" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,*">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{DynamicResource AvailableFeatures}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+            <TextBlock Text="依用途選擇要產生的項目" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          </StackPanel>
+
+          <TextBox Grid.Row="1" Margin="0,16,0,12" PlaceholderText="搜尋功能（Demo 畫面）" />
+
+          <ListBox Grid.Row="2"
+                   ItemsSource="{Binding VisibleFeatures}"
+                   SelectedItem="{Binding SelectedFeature}"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0,0,0,10" />
+                <Setter Property="CornerRadius" Value="10" />
+              </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="domain:FeatureDefinition">
+                <Border Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
+                  <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextBrush}" />
+                      <TextBlock Text="{Binding Description}" Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Background="#F2F4F7" CornerRadius="12" Padding="8,4" VerticalAlignment="Top">
+                      <TextBlock Text="{Binding Badge}" Foreground="#475467" FontSize="10" FontWeight="SemiBold" />
+                    </Border>
+                    <TextBlock Grid.Row="1" Margin="0,9,0,0" Text="{Binding ShortName, StringFormat='CLI · {0}'}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </Border>
+
+      <ScrollViewer Grid.Column="2">
+        <Grid Margin="28" RowDefinitions="Auto,Auto,Auto,Auto,Auto" MaxWidth="760" HorizontalAlignment="Stretch">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="{Binding SelectedFeatureTitle}" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+              <Border Background="#F4EBFF" CornerRadius="13" Padding="9,4" VerticalAlignment="Center">
+                <TextBlock Text="{Binding SelectedFeatureBadge}" Foreground="#6941C6" FontSize="11" FontWeight="SemiBold" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding SelectedFeatureDescription}" Foreground="{DynamicResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
+          </StackPanel>
+
+          <Border Grid.Row="1" Margin="0,20,0,0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="20">
+            <StackPanel Spacing="14">
+              <TextBlock Text="{DynamicResource ParameterSettings}" FontSize="16" FontWeight="Bold" />
+
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="{DynamicResource TargetProject}" FontSize="12" FontWeight="SemiBold" />
+                  <ComboBox ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}" PlaceholderText="請先選擇工作區">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate DataType="domain:ProjectInfo">
+                        <TextBlock Text="{Binding DisplayText}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="6">
+                  <TextBlock Text="範本模式" FontSize="12" FontWeight="SemiBold" />
+                  <ComboBox ItemsSource="{Binding TemplateModes}" SelectedItem="{Binding SelectedTemplateMode}" />
+                </StackPanel>
+              </Grid>
+
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="名稱" FontSize="12" FontWeight="SemiBold" />
+                  <TextBox Text="{Binding ComponentName}" PlaceholderText="例如 OrdersController" />
+                  <TextBlock Text="{Binding ValidationMessage}" Foreground="#D92D20" FontSize="11" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="6">
+                  <TextBlock Text="輸出位置" FontSize="12" FontWeight="SemiBold" />
+                  <TextBox Text="{Binding OutputPath}" PlaceholderText="Controllers" />
+                </StackPanel>
+              </Grid>
+
+              <Border Background="#F9FAFB" CornerRadius="8" Padding="12">
+                <StackPanel Orientation="Horizontal" Spacing="24">
+                  <CheckBox IsChecked="{Binding UseAsyncActions}" Content="產生非同步動作" />
+                  <CheckBox IsChecked="{Binding IncludeApiActions}" Content="使用 REST API 模式" />
+                </StackPanel>
+              </Border>
+
+              <Expander Header="進階選項">
+                <StackPanel Margin="0,10,0,0" Spacing="8">
+                  <CheckBox Content="覆寫既有檔案（Demo 不會實際覆寫）" />
+                  <CheckBox Content="略過建置 --no-build" />
+                  <TextBox PlaceholderText="自訂命名空間（選填）" />
+                </StackPanel>
+              </Expander>
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="2" Margin="0,16,0,0" Background="#101828" CornerRadius="12" Padding="18">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{DynamicResource CommandPreview}" Foreground="White" FontWeight="SemiBold" />
+                <Border Grid.Column="1" Background="#344054" CornerRadius="12" Padding="8,4">
+                  <TextBlock Text="唯讀" Foreground="#D0D5DD" FontSize="10" />
+                </Border>
+              </Grid>
+              <TextBlock Text="{Binding CommandPreviewText}" Foreground="#BDB4FE" FontFamily="Menlo" FontSize="12" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding WorkingDirectoryText, StringFormat='工作目錄：{0}'}" Foreground="#98A2B3" FontSize="10" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="3" Margin="0,16,0,0" Background="#FFFAEB" BorderBrush="#FEDF89" BorderThickness="1" CornerRadius="10" Padding="14">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="!" Foreground="#B54708" FontSize="18" FontWeight="Bold" />
+              <StackPanel>
+                <TextBlock Text="平台與安全檢查" Foreground="#93370D" FontWeight="SemiBold" FontSize="12" />
+                <TextBlock Text="{Binding AvailabilityMessage}" Foreground="#B54708" FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Grid Grid.Row="4" Margin="0,20,0,28" RowDefinitions="Auto,Auto,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+              <TextBlock Text="所有操作都會先顯示命令與目標路徑。" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="secondary" Content="清除結果" Command="{Binding ClearResultCommand}" />
+              <Button Grid.Column="2" Classes="primary" Content="{DynamicResource RunDemo}" Command="{Binding RequestExecutionCommand}" IsEnabled="{Binding CanExecuteSelectedFeature}" />
+            </Grid>
+
+            <Border Grid.Row="1" IsVisible="{Binding IsRunning}" Margin="0,16,0,0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="15">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="正在執行示意流程…" FontWeight="SemiBold" />
+                  <Button Grid.Column="1" Content="取消" Command="{Binding CancelExecutionCommand}" />
+                </Grid>
+                <ProgressBar IsIndeterminate="True" Height="5" />
+                <TextBox Text="{Binding ExecutionOutput}" IsReadOnly="True" AcceptsReturn="True" MinHeight="100" FontFamily="Menlo" FontSize="11" />
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" IsVisible="{Binding HasResult}" Margin="0,16,0,0" Background="#ECFDF3" BorderBrush="#ABEFC6" BorderThickness="1" CornerRadius="10" Padding="16">
+              <StackPanel Spacing="8">
+                <TextBlock Text="{Binding ResultTitle}" Foreground="#027A48" FontSize="16" FontWeight="Bold" />
+                <TextBlock Text="{Binding ResultSummary}" Foreground="#05603A" TextWrapping="Wrap" FontSize="12" />
+                <ItemsControl ItemsSource="{Binding ResultFiles}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:CompileBindings="False">
+                      <TextBlock Text="{Binding}" Foreground="#05603A" FontFamily="Menlo" FontSize="11" Margin="0,2" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </Grid>
+      </ScrollViewer>
+    </Grid>
+
+    <Border Grid.RowSpan="2" IsVisible="{Binding IsConfirmationVisible}" Background="#B3121826" ZIndex="100">
+      <Border Width="520" Background="White" CornerRadius="14" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Spacing="16">
+          <Border Width="44" Height="44" Background="#FFF4E5" CornerRadius="22" HorizontalAlignment="Left">
+            <TextBlock Text="!" Foreground="#B54708" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel Spacing="6">
+            <TextBlock Text="確認示意執行" FontSize="22" FontWeight="Bold" />
+            <TextBlock Text="請再次確認目標與命令。Demo 不會執行外部 CLI，也不會修改檔案。" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
+          </StackPanel>
+          <Border Background="#101828" CornerRadius="9" Padding="14">
+            <TextBlock Text="{Binding CommandPreviewText}" Foreground="#BDB4FE" FontFamily="Menlo" FontSize="11" TextWrapping="Wrap" />
+          </Border>
+          <Border IsVisible="{Binding IsDatabaseRisk}" Background="#FEF3F2" BorderBrush="#FECDCA" BorderThickness="1" CornerRadius="8" Padding="12">
+            <TextBlock Text="高風險操作：正式版本會顯示 DbContext、環境與連線資訊來源，並要求二次確認。" Foreground="#B42318" TextWrapping="Wrap" FontSize="12" />
+          </Border>
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+            <TextBlock Text="SAFE DEMO" Foreground="#7F56D9" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Cancel}" Command="{Binding CancelConfirmationCommand}" />
+            <Button Grid.Column="2" Classes="primary" Content="{DynamicResource Confirm}" Command="{Binding ConfirmExecutionCommand}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
+</Window>

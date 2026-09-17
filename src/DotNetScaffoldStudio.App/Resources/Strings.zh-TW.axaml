@@ -1,0 +1,15 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:String x:Key="AppTitle">DotNet Scaffold Studio</x:String>
+  <x:String x:Key="AppSubtitle">把繁瑣的 .NET CLI 變成清楚、安全的操作流程</x:String>
+  <x:String x:Key="WorkspaceLabel">目前工作區</x:String>
+  <x:String x:Key="ChooseWorkspace">選擇資料夾</x:String>
+  <x:String x:Key="UseDemoWorkspace">使用示範資料</x:String>
+  <x:String x:Key="TargetProject">目標專案</x:String>
+  <x:String x:Key="AvailableFeatures">可用功能</x:String>
+  <x:String x:Key="ParameterSettings">參數設定</x:String>
+  <x:String x:Key="CommandPreview">命令預覽</x:String>
+  <x:String x:Key="RunDemo">執行示意</x:String>
+  <x:String x:Key="Cancel">取消</x:String>
+  <x:String x:Key="Confirm">確認並執行示意</x:String>
+</ResourceDictionary>

@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DotNetScaffoldStudio.App/DotNetScaffoldStudio.App.csproj" />
+    <Project Path="src/DotNetScaffoldStudio.Application/DotNetScaffoldStudio.Application.csproj" />
+    <Project Path="src/DotNetScaffoldStudio.Domain/DotNetScaffoldStudio.Domain.csproj" />
+    <Project Path="src/DotNetScaffoldStudio.Infrastructure/DotNetScaffoldStudio.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DotNetScaffoldStudio.CommandProbe/DotNetScaffoldStudio.CommandProbe.csproj" />
+    <Project Path="tests/DotNetScaffoldStudio.IntegrationTests/DotNetScaffoldStudio.IntegrationTests.csproj" />
+    <Project Path="tests/DotNetScaffoldStudio.UiTests/DotNetScaffoldStudio.UiTests.csproj" />
+    <Project Path="tests/DotNetScaffoldStudio.UnitTests/DotNetScaffoldStudio.UnitTests.csproj" />
+  </Folder>
+</Solution>
