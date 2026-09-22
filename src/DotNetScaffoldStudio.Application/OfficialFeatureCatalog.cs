@@ -119,7 +119,12 @@ public static class OfficialFeatureCatalog
                 new ParameterDefinition("name", "名稱", ParameterValueKind.Text),
                 new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true)
             ],
-            dependencies: [DotNet10]);
+            dependencies: [DotNet10],
+            constraints:
+            [
+                ParameterConstraint.NameFormat("name"),
+                ParameterConstraint.PathWithinWorkspace("output")
+            ]);
 
     private static CatalogFeature Scaffold(string id, string name, IReadOnlyList<string> variants) =>
         new(
@@ -131,14 +136,21 @@ public static class OfficialFeatureCatalog
             parameters:
             [
                 new ParameterDefinition("project", "目標專案", ParameterValueKind.Path, isRequired: true),
-                new ParameterDefinition("variant", "範本", ParameterValueKind.Enumeration, allowedValues: variants)
+                new ParameterDefinition("variant", "範本", ParameterValueKind.Enumeration, allowedValues: variants),
+                new ParameterDefinition("name", "名稱", ParameterValueKind.Text, isAdvanced: true)
             ],
             dependencies:
             [
                 CodeGenerator,
                 new DependencyRequirement(DependencyKind.NuGetPackage, "Microsoft.VisualStudio.Web.CodeGeneration.Design", "10.0")
             ],
-            variants: variants);
+            variants: variants,
+            constraints:
+            [
+                ParameterConstraint.PathWithinWorkspace("project"),
+                ParameterConstraint.NameFormat("name"),
+                ParameterConstraint.RequiredWhen("variant", "name", "CRUD")
+            ]);
 
     private static CatalogFeature Ef(
         string id,
@@ -156,12 +168,18 @@ public static class OfficialFeatureCatalog
             parameters:
             [
                 new ParameterDefinition("project", "目標專案", ParameterValueKind.Path, isRequired: true),
-                new ParameterDefinition("context", "DbContext", ParameterValueKind.Text, isAdvanced: true)
+                new ParameterDefinition("context", "DbContext", ParameterValueKind.Text, isAdvanced: true),
+                new ParameterDefinition("connection", "連線字串", ParameterValueKind.Secret, isAdvanced: true)
             ],
             dependencies:
             [
                 EfTool,
                 new DependencyRequirement(DependencyKind.NuGetPackage, "Microsoft.EntityFrameworkCore.Design", "10.0")
+            ],
+            constraints:
+            [
+                ParameterConstraint.PathWithinWorkspace("project"),
+                ParameterConstraint.MutuallyExclusive("context", "connection")
             ]);
 }
 

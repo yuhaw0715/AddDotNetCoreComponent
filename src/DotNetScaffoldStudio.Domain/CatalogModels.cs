@@ -125,7 +125,8 @@ public sealed record CatalogFeature
         IReadOnlySet<PlatformFamily>? supportedPlatforms = null,
         IReadOnlyList<ParameterDefinition>? parameters = null,
         IReadOnlyList<DependencyRequirement>? dependencies = null,
-        IReadOnlyList<string>? variants = null)
+        IReadOnlyList<string>? variants = null,
+        IReadOnlyList<ParameterConstraint>? constraints = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -155,6 +156,14 @@ public sealed record CatalogFeature
         Parameters = Array.AsReadOnly(parameterArray);
         Dependencies = Array.AsReadOnly(dependencies?.ToArray() ?? []);
         Variants = Array.AsReadOnly(variants?.ToArray() ?? []);
+        var parameterIds = parameterArray.Select(parameter => parameter.Id).ToHashSet(StringComparer.Ordinal);
+        var constraintArray = constraints?.ToArray() ?? [];
+        if (constraintArray.Any(constraint => constraint.ParameterIds.Any(parameterId => !parameterIds.Contains(parameterId))))
+        {
+            throw new ArgumentException("參數驗證規則只能參考此功能的參數。", nameof(constraints));
+        }
+
+        ValidationConstraints = Array.AsReadOnly(constraintArray);
     }
 
     public string Id { get; }
@@ -167,6 +176,7 @@ public sealed record CatalogFeature
     public IReadOnlyList<ParameterDefinition> Parameters { get; }
     public IReadOnlyList<DependencyRequirement> Dependencies { get; }
     public IReadOnlyList<string> Variants { get; }
+    public IReadOnlyList<ParameterConstraint> ValidationConstraints { get; }
 }
 
 public sealed record LocalTemplateCapability(
