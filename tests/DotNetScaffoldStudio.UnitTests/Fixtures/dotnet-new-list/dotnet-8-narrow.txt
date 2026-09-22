@@ -1,0 +1,6 @@
+These templates are installed:
+
+Template Name          Short Name       Language  Tags
+---------------------  ---------------  --------  ----------------
+Console App            console          C#        Common/Console
+Acme Service           acme-service               Custom/Acme

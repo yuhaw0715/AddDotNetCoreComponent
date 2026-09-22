@@ -1,0 +1,3 @@
+Contoso Opaque Template
+This template does not expose a conventional help table.
+Use the template documentation for details.

@@ -1,0 +1,23 @@
+Contoso Web Template
+Author: Contoso
+Description: A template owned by Contoso.
+
+Usage:
+  dotnet new contoso-web [options] [template options]
+
+Options:
+  --help                   Display help.
+
+Template options:
+  --framework <net10.0>    The target framework.
+                           Type: choice
+                             net10.0  Target .NET 10.
+                             net9.0   Target .NET 9.
+                           Default: net10.0
+  --enabled                Enables the generated feature.
+                           Type: bool
+                           Default: false
+  --root <path>            The output root path.
+                           Type: path
+
+To see help for another language, use --language option.

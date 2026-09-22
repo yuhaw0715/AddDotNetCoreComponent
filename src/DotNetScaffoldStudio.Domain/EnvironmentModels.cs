@@ -31,3 +31,26 @@ public sealed record DotNetEnvironmentSnapshot(
     EnvironmentDetectionStatus LocalToolStatus,
     IReadOnlyList<LocalDotNetTool> LocalTools,
     IReadOnlyList<string> Diagnostics);
+
+public sealed record DotNetTemplateDiscoveryResult
+{
+    public DotNetTemplateDiscoveryResult(
+        EnvironmentDetectionStatus status,
+        IReadOnlyList<LocalTemplateCapability> templates,
+        IReadOnlyList<string> rawStandardOutput,
+        IReadOnlyList<string> rawStandardError,
+        IReadOnlyList<string> diagnostics)
+    {
+        Status = status;
+        Templates = Array.AsReadOnly(templates.ToArray());
+        RawStandardOutput = Array.AsReadOnly(rawStandardOutput.ToArray());
+        RawStandardError = Array.AsReadOnly(rawStandardError.ToArray());
+        Diagnostics = Array.AsReadOnly(diagnostics.ToArray());
+    }
+
+    public EnvironmentDetectionStatus Status { get; }
+    public IReadOnlyList<LocalTemplateCapability> Templates { get; }
+    public IReadOnlyList<string> RawStandardOutput { get; }
+    public IReadOnlyList<string> RawStandardError { get; }
+    public IReadOnlyList<string> Diagnostics { get; }
+}

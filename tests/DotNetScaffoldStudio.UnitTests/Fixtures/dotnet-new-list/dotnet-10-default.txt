@@ -1,0 +1,8 @@
+These templates matched your input:
+
+Template Name                                 Short Name                    Language    Tags
+--------------------------------------------  ----------------------------  ----------  ----------------------------------
+ASP.NET Core Empty                            web                           [C#],F#     Web/Empty
+ASP.NET Core Web App (Razor Pages)            webapp,razor                  [C#]        Web/MVC/Razor Pages
+dotnet gitattributes file                     gitattributes,.gitattributes              Config
+Contoso Service                               contoso-service               [C#]        Web/Contoso/Service

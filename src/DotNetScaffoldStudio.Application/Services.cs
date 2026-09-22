@@ -37,6 +37,19 @@ public interface IDotNetEnvironmentDiscovery
     Task<DotNetEnvironmentSnapshot> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);
 }
 
+public interface IDotNetTemplateDiscovery
+{
+    Task<DotNetTemplateDiscoveryResult> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);
+}
+
+public interface ICustomTemplateHelpDiscovery
+{
+    Task<CustomTemplateHelpDiscoveryResult> DiscoverAsync(
+        string workspaceRoot,
+        string templateShortName,
+        CancellationToken cancellationToken);
+}
+
 public interface ITargetProjectValidator
 {
     TargetValidationResult Validate(string workspaceRoot, string projectPath, string commandWorkingDirectory);

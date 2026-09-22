@@ -1,0 +1,9 @@
+Contoso Partial Template
+Description: A template with an extension that is not fully understood.
+
+Template options:
+  --known <value>          A known text option.
+                           Type: text
+  --mystery <value>        An option with a custom type.
+                           Type: custom-widget
+  --broken option text
