@@ -42,6 +42,7 @@ public sealed partial class App : Avalonia.Application
         services.AddSingleton<ParameterValidator>();
         services.AddSingleton<IDotNetNewCommandFactory, DotNetNewCommandFactory>();
         services.AddSingleton<IAspNetScaffoldingCommandFactory, AspNetScaffoldingCommandFactory>();
+        services.AddSingleton<IEfCoreCommandFactory, EfCoreCommandFactory>();
         services.AddSingleton<IDotNetTemplateDiscovery>(provider =>
             new DotNetTemplateDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<ICustomTemplateHelpDiscovery>(provider =>

@@ -214,22 +214,86 @@ public static class OfficialFeatureCatalog
             "dotnet-ef",
             shortNames,
             risk,
-            parameters:
-            [
-                new ParameterDefinition("project", "目標專案", ParameterValueKind.Path, isRequired: true),
-                new ParameterDefinition("context", "DbContext", ParameterValueKind.Text, isAdvanced: true),
-                new ParameterDefinition("connection", "連線字串", ParameterValueKind.Secret, isAdvanced: true)
-            ],
+            parameters: CreateEfParameters(id),
             dependencies:
             [
                 EfTool,
                 new DependencyRequirement(DependencyKind.NuGetPackage, "Microsoft.EntityFrameworkCore.Design", "10.0")
             ],
-            constraints:
-            [
-                ParameterConstraint.PathWithinWorkspace("project"),
-                ParameterConstraint.MutuallyExclusive("context", "connection")
-            ]);
+            constraints: CreateEfConstraints(id));
+
+    private static IReadOnlyList<ParameterDefinition> CreateEfParameters(string id)
+    {
+        var parameters = new List<ParameterDefinition>
+        {
+            new("project", "目標專案", ParameterValueKind.Path, isRequired: true),
+            new("context", "DbContext", ParameterValueKind.Text, isAdvanced: true),
+            new("connection", "連線字串", ParameterValueKind.Secret, isAdvanced: true, isRequired: id == "dbcontext-scaffold")
+        };
+
+        switch (id)
+        {
+            case "dbcontext-scaffold":
+                parameters.Add(new ParameterDefinition("provider", "資料庫提供者", ParameterValueKind.Text, isRequired: true));
+                parameters.Add(new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true));
+                break;
+            case "dbcontext-optimize":
+                parameters.Add(new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true));
+                break;
+            case "dbcontext-script":
+            case "migrations-script":
+                parameters.Add(new ParameterDefinition("fromMigration", "起始 Migration", ParameterValueKind.Text, isAdvanced: true));
+                parameters.Add(new ParameterDefinition("toMigration", "結束 Migration", ParameterValueKind.Text, isAdvanced: true));
+                parameters.Add(new ParameterDefinition("output", "輸出檔案", ParameterValueKind.Path, isAdvanced: true));
+                break;
+            case "migrations-add":
+                parameters.Add(new ParameterDefinition("migrationName", "Migration 名稱", ParameterValueKind.Text, isRequired: true));
+                break;
+            case "migrations-remove":
+                parameters.Add(new ParameterDefinition("migrationName", "Migration 名稱", ParameterValueKind.Text, isRequired: true));
+                parameters.Add(new ParameterDefinition("force", "強制移除", ParameterValueKind.Boolean, isAdvanced: true));
+                break;
+            case "migrations-bundle":
+                parameters.Add(new ParameterDefinition("output", "輸出檔案", ParameterValueKind.Path, isAdvanced: true));
+                break;
+            case "database-update":
+                parameters.Add(new ParameterDefinition("migration", "目標 Migration", ParameterValueKind.Text, isAdvanced: true));
+                break;
+        }
+
+        return parameters;
+    }
+
+    private static IReadOnlyList<ParameterConstraint> CreateEfConstraints(string id)
+    {
+        var constraints = new List<ParameterConstraint>
+        {
+            ParameterConstraint.PathWithinWorkspace("project"),
+            ParameterConstraint.MutuallyExclusive("context", "connection")
+        };
+        if (id is "dbcontext-scaffold" or "dbcontext-optimize" or "dbcontext-script" or "migrations-script" or "migrations-bundle")
+        {
+            constraints.Add(ParameterConstraint.PathWithinWorkspace("output"));
+        }
+
+        if (id is "migrations-add" or "migrations-remove")
+        {
+            constraints.Add(ParameterConstraint.NameFormat("migrationName"));
+        }
+
+        if (id is "dbcontext-script" or "migrations-script")
+        {
+            constraints.Add(ParameterConstraint.NameFormat("fromMigration"));
+            constraints.Add(ParameterConstraint.NameFormat("toMigration"));
+        }
+
+        if (id == "database-update")
+        {
+            constraints.Add(ParameterConstraint.NameFormat("migration"));
+        }
+
+        return constraints;
+    }
 }
 
 public static class FeatureCatalogMerger
