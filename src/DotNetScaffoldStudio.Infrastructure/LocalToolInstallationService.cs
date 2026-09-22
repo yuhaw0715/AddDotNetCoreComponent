@@ -86,7 +86,8 @@ public sealed class LocalToolInstallationService(
                 workspaceRoot,
                 [new("new"), new("tool-manifest")]),
             requiresNetwork: false,
-            [Path.Combine(".config", "dotnet-tools.json")]);
+            [Path.Combine(".config", "dotnet-tools.json")],
+            DependencyPlanStepKind.LocalToolManifest);
 
     private DependencyPlanStep CreateToolStep(
         DependencyCapability capability,
@@ -113,7 +114,8 @@ public sealed class LocalToolInstallationService(
             capability,
             CreateRequest(workspaceRoot, arguments),
             requiresNetwork: true,
-            [Path.Combine(".config", "dotnet-tools.json")]);
+            [Path.Combine(".config", "dotnet-tools.json")],
+            DependencyPlanStepKind.LocalToolInstallation);
     }
 
     private CommandRequest CreateRequest(

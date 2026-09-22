@@ -63,6 +63,15 @@ public interface ILocalToolInstallationService
         CancellationToken cancellationToken);
 }
 
+public interface INuGetPackageInstallationService
+{
+    Task<DependencyPlan> CreatePlanAsync(
+        string workspaceRoot,
+        string targetProjectPath,
+        IReadOnlyList<DependencyRequirement> packageRequirements,
+        CancellationToken cancellationToken);
+}
+
 public interface IDotNetTemplateDiscovery
 {
     Task<DotNetTemplateDiscoveryResult> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);

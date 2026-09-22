@@ -118,7 +118,7 @@ public sealed class DependencyPlanWorkflow(
                     DependencyPlanStepStatus.Failed,
                     null,
                     null,
-                    $"執行相依性步驟失敗：{exception.Message}");
+                    $"{GetStageLabel(step)}失敗：{exception.Message}");
             }
 
             results.Add(stepResult);
@@ -163,12 +163,15 @@ public sealed class DependencyPlanWorkflow(
     {
         if (!execution.Command.Succeeded)
         {
+            var output = execution.Command.StandardError.Count == 0
+                ? null
+                : $"錯誤輸出：{string.Join(Environment.NewLine, execution.Command.StandardError)}";
             return new DependencyPlanStepResult(
                 step,
                 DependencyPlanStepStatus.Failed,
                 execution,
                 revalidation,
-                $"相依性命令失敗，結束碼 {execution.Command.ExitCode}。未自動回復已發生的檔案變更。");
+                $"{GetStageLabel(step)}失敗，結束碼 {execution.Command.ExitCode}。{output} 未自動回復已發生的檔案變更。");
         }
 
         var capability = revalidation.Capabilities.FirstOrDefault(candidate =>
@@ -182,11 +185,21 @@ public sealed class DependencyPlanWorkflow(
                 DependencyPlanStepStatus.RevalidationFailed,
                 execution,
                 revalidation,
-                $"相依性命令完成，但重驗證失敗：{reason}");
+                $"{GetStageLabel(step)}完成，但重驗證失敗：{reason}");
         }
 
         return new DependencyPlanStepResult(step, DependencyPlanStepStatus.Succeeded, execution, revalidation, null);
     }
+
+    private static string GetStageLabel(DependencyPlanStep step) =>
+        step.Kind switch
+        {
+            DependencyPlanStepKind.NuGetPackageInstallation => "NuGet 套件安裝",
+            DependencyPlanStepKind.NuGetRestore => "NuGet 還原",
+            DependencyPlanStepKind.LocalToolManifest => "本機工具資訊清單建立",
+            DependencyPlanStepKind.LocalToolInstallation => "本機工具安裝",
+            _ => "相依性步驟"
+        };
 
     private static DependencyPlanExecutionStatus GetOverallStatus(
         IReadOnlyList<DependencyPlanStepResult> results)

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace DotNetScaffoldStudio.CommandProbe;
 
@@ -37,6 +38,20 @@ public static class Program
         {
             await InstallLocalToolAsync(packageId, version);
             return 0;
+        }
+
+        if (args is ["add", var packageProjectPath, "package", var packagePackageId, "--version", var packageVersion, "--no-restore"])
+        {
+            await AddPackageAsync(packageProjectPath, packagePackageId, packageVersion);
+            return 0;
+        }
+
+        if (args is ["restore", var restoreProjectPath])
+        {
+            await RestoreAsync(restoreProjectPath);
+            return Environment.GetEnvironmentVariable("DOTNET_SCAFFOLD_STUDIO_FIXTURE_RESTORE_FAILURE") == "1"
+                ? 42
+                : 0;
         }
 
         if (args is ["wait"])
@@ -134,6 +149,53 @@ public static class Program
                 UnixFileMode.UserRead |
                 UnixFileMode.UserWrite |
                 UnixFileMode.UserExecute);
+        }
+    }
+
+    private static async Task AddPackageAsync(string projectPath, string packageId, string version)
+    {
+        var fullPath = Path.GetFullPath(projectPath, Environment.CurrentDirectory);
+        var document = XDocument.Load(fullPath, LoadOptions.None);
+        var project = document.Root ?? throw new InvalidOperationException("fixture 專案缺少根元素。");
+        var itemGroup = project.Elements().FirstOrDefault(element => element.Name.LocalName == "ItemGroup");
+        if (itemGroup is null)
+        {
+            itemGroup = new XElement(project.GetDefaultNamespace() + "ItemGroup");
+            project.Add(itemGroup);
+        }
+
+        var package = itemGroup.Elements().FirstOrDefault(element =>
+            element.Name.LocalName == "PackageReference" &&
+            string.Equals((string?)element.Attribute("Include"), packageId, StringComparison.OrdinalIgnoreCase));
+        if (package is null)
+        {
+            itemGroup.Add(new XElement(
+                project.GetDefaultNamespace() + "PackageReference",
+                new XAttribute("Include", packageId),
+                new XAttribute("Version", version)));
+        }
+        else
+        {
+            package.SetAttributeValue("Version", version);
+        }
+
+        await using var stream = File.Create(fullPath);
+        document.Save(stream);
+    }
+
+    private static async Task RestoreAsync(string projectPath)
+    {
+        var fullPath = Path.GetFullPath(projectPath, Environment.CurrentDirectory);
+        var projectDirectory = Path.GetDirectoryName(fullPath)
+            ?? throw new InvalidOperationException("fixture 專案缺少父目錄。");
+        var assetsDirectory = Path.Combine(projectDirectory, "obj");
+        Directory.CreateDirectory(assetsDirectory);
+        await File.WriteAllTextAsync(
+            Path.Combine(assetsDirectory, "project.assets.json"),
+            "{\"version\":3,\"targets\":{}}\n");
+        if (Environment.GetEnvironmentVariable("DOTNET_SCAFFOLD_STUDIO_FIXTURE_RESTORE_FAILURE") == "1")
+        {
+            Console.Error.WriteLine("fixture restore failed");
         }
     }
 

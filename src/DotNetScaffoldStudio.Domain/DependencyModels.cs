@@ -53,7 +53,8 @@ public sealed record DependencyPlanStep
         DependencyCapability dependency,
         CommandRequest request,
         bool requiresNetwork,
-        IReadOnlyList<string>? expectedChanges = null)
+        IReadOnlyList<string>? expectedChanges = null,
+        DependencyPlanStepKind kind = DependencyPlanStepKind.Generic)
     {
         ArgumentNullException.ThrowIfNull(dependency);
         ArgumentNullException.ThrowIfNull(request);
@@ -67,12 +68,14 @@ public sealed record DependencyPlanStep
         Request = request;
         RequiresNetwork = requiresNetwork;
         ExpectedChanges = Array.AsReadOnly(expectedChanges?.ToArray() ?? []);
+        Kind = kind;
     }
 
     public DependencyCapability Dependency { get; }
     public CommandRequest Request { get; }
     public bool RequiresNetwork { get; }
     public IReadOnlyList<string> ExpectedChanges { get; }
+    public DependencyPlanStepKind Kind { get; }
 }
 
 public sealed record DependencyPlan
@@ -96,7 +99,12 @@ public sealed record DependencyPlan
         Steps = Array.AsReadOnly(steps.ToArray());
         Diagnostics = Array.AsReadOnly(diagnostics?.ToArray() ?? []);
 
-        if (Steps.Select(step => $"{step.Dependency.Requirement.Kind}:{step.Dependency.Requirement.Id}")
+        if (Steps.Select(step => string.Join(
+                ':',
+                step.Dependency.Requirement.Kind,
+                step.Dependency.Requirement.Id,
+                step.Kind,
+                step.Request.GetConfirmationFingerprint()))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Count() != Steps.Count)
         {
@@ -134,6 +142,7 @@ public sealed record DependencyPlan
                     {
                         step.Dependency.Requirement.Kind.ToString(),
                         step.Dependency.Requirement.Id,
+                        step.Kind.ToString(),
                         step.RequiresNetwork.ToString(),
                         step.Request.GetConfirmationFingerprint()
                     }.Concat(step.ExpectedChanges)))
@@ -143,6 +152,15 @@ public sealed record DependencyPlan
 }
 
 public sealed record DependencyPlanConfirmation(Guid Id, string PlanFingerprint);
+
+public enum DependencyPlanStepKind
+{
+    Generic,
+    LocalToolManifest,
+    LocalToolInstallation,
+    NuGetPackageInstallation,
+    NuGetRestore
+}
 
 public enum DependencyPlanStepStatus
 {
