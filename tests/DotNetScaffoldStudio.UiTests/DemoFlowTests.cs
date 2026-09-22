@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 using DotNetScaffoldStudio.Application;
 using DotNetScaffoldStudio.Domain;
 
@@ -25,6 +27,39 @@ public sealed class DemoFlowTests
             Assert.Equal(workspacePath, viewModel.WorkspacePath);
             Assert.Same(selectedProject, viewModel.SelectedProject);
         }
+    }
+
+    [Fact]
+    public void UiTextAndAccessibility_AreResourceBackedAndKeyboardDiscoverable()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());
+        var text = new DefaultUiTextProvider();
+        var axaml = ReadMainWindowMarkup();
+
+        Assert.Equal("閒置", viewModel.ExecutionStageLabel);
+        Assert.Equal("成功", text.Get("Stage.Succeeded"));
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "project");
+        Assert.Contains("不支援 macOS", viewModel.VisibleFeatures.Single(feature => feature.Id == "wpf").AvailabilityReason, StringComparison.Ordinal);
+        Assert.Contains("AutomationProperties.Name", axaml, StringComparison.Ordinal);
+        Assert.Contains("TabIndex=\"0\"", axaml, StringComparison.Ordinal);
+        Assert.Contains("TabIndex=\"9\"", axaml, StringComparison.Ordinal);
+        Assert.DoesNotMatch(
+            new Regex(@"(?m)\b(Text|Content|Header|PlaceholderText|ToolTip\.Tip)=""(?!\{)[^""]+"""),
+            axaml);
+    }
+
+    private static string ReadMainWindowMarkup()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        {
+            var candidate = Path.Combine(directory.FullName, "src", "DotNetScaffoldStudio.App", "MainWindow.axaml");
+            if (File.Exists(candidate))
+            {
+                return File.ReadAllText(candidate);
+            }
+        }
+
+        throw new DirectoryNotFoundException("找不到 MainWindow.axaml 測試來源。");
     }
 
     [Fact]

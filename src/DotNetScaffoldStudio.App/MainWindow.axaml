@@ -14,10 +14,10 @@
   <Grid RowDefinitions="72,*">
     <Border Grid.Row="0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="24,0">
       <Grid ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
-        <Button Width="38" Height="38" Classes="secondary" Content="☰" Command="{Binding ToggleNavigationCommand}" ToolTip.Tip="{DynamicResource ToggleNavigation}" />
+        <Button Width="38" Height="38" Classes="secondary" Content="{DynamicResource MenuGlyph}" Command="{Binding ToggleNavigationCommand}" ToolTip.Tip="{DynamicResource ToggleNavigation}" AutomationProperties.Name="{DynamicResource ToggleNavigation}" TabIndex="0" />
         <StackPanel Grid.Column="1" Margin="14,0,0,0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
           <Border Width="38" Height="38" CornerRadius="10" Background="{DynamicResource BrandBrush}">
-            <TextBlock Text=".N" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Text="{DynamicResource BrandMark}" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Border>
           <StackPanel Spacing="1">
             <TextBlock Text="{DynamicResource AppTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
@@ -42,14 +42,16 @@
               <TextBlock Text="{Binding WorkspacePath}" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="2" FontSize="12" />
             </Border>
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-              <Button Grid.Column="0" Classes="secondary" Content="{DynamicResource ChooseWorkspace}" Click="ChooseWorkspace_OnClick" FontSize="12" />
-              <Button Grid.Column="1" Classes="secondary" Content="示範資料" Command="{Binding UseDemoWorkspaceCommand}" FontSize="12" />
+              <Button Grid.Column="0" Classes="secondary" Content="{DynamicResource ChooseWorkspace}" Click="ChooseWorkspace_OnClick" AutomationProperties.Name="{DynamicResource ChooseWorkspace}" TabIndex="1" FontSize="12" />
+              <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource UseDemoWorkspace}" Command="{Binding UseDemoWorkspaceCommand}" AutomationProperties.Name="{DynamicResource UseDemoWorkspace}" TabIndex="2" FontSize="12" />
             </Grid>
           </StackPanel>
 
           <Border Grid.Row="1" IsVisible="{Binding IsNavigationExpanded}" Margin="0,18,0,14" Height="1" Background="#344054" />
 
           <ListBox Grid.Row="2"
+                   AutomationProperties.Name="{DynamicResource MainNavigation}"
+                   TabIndex="3"
                    IsVisible="{Binding IsNavigationExpanded}"
                    ItemsSource="{Binding NavigationItems}"
                    SelectedItem="{Binding SelectedNavigation}"
@@ -78,6 +80,8 @@
 
           <ListBox Grid.Row="2"
                    IsVisible="{Binding IsNavigationCollapsed}"
+                   AutomationProperties.Name="{DynamicResource MainNavigation}"
+                   TabIndex="3"
                    ItemsSource="{Binding NavigationItems}"
                    SelectedItem="{Binding SelectedNavigation}"
                    Background="Transparent"
@@ -105,8 +109,8 @@
 
           <Border Grid.Row="3" IsVisible="{Binding IsNavigationExpanded}" Background="#1D2939" CornerRadius="8" Padding="12">
             <StackPanel Spacing="4">
-              <TextBlock Text="DEMO SAFE MODE" Foreground="#BDB4FE" FontWeight="Bold" FontSize="11" />
-              <TextBlock Text="所有執行皆為模擬，不會修改檔案或資料庫。" Foreground="#D0D5DD" FontSize="11" TextWrapping="Wrap" />
+              <TextBlock Text="{DynamicResource DemoSafeModeHeading}" Foreground="#BDB4FE" FontWeight="Bold" FontSize="11" />
+              <TextBlock Text="{DynamicResource DemoSafeModeDescription}" Foreground="#D0D5DD" FontSize="11" TextWrapping="Wrap" />
             </StackPanel>
           </Border>
         </Grid>
@@ -119,13 +123,15 @@
               <TextBlock Text="{DynamicResource AvailableFeatures}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
               <TextBlock Grid.Column="1" Text="{Binding FeatureCountSummary}" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
             </Grid>
-            <TextBlock Text="依用途選擇要產生的項目" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+            <TextBlock Text="{DynamicResource FeatureGroupDescription}" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
           </StackPanel>
 
-          <TextBox Grid.Row="1" Margin="0,16,0,12" Text="{Binding FeatureSearchText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{DynamicResource FeatureSearchPlaceholder}" />
+          <TextBox Grid.Row="1" Margin="0,16,0,12" Text="{Binding FeatureSearchText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{DynamicResource FeatureSearchPlaceholder}" AutomationProperties.Name="{DynamicResource FeatureSearchPlaceholder}" TabIndex="4" />
 
           <Grid Grid.Row="2">
             <ListBox ItemsSource="{Binding VisibleFeatures}"
+                     AutomationProperties.Name="{DynamicResource FeatureList}"
+                     TabIndex="5"
                      SelectedItem="{Binding SelectedFeature}"
                      Background="Transparent"
                      BorderThickness="0">
@@ -147,9 +153,16 @@
                       <Border Grid.Column="1" Background="#F2F4F7" CornerRadius="12" Padding="8,4" VerticalAlignment="Top">
                         <TextBlock Text="{Binding Badge}" Foreground="#475467" FontSize="10" FontWeight="SemiBold" />
                       </Border>
-                      <TextBlock Grid.Row="1" Margin="0,9,0,0" Text="{Binding ShortName, StringFormat='CLI · {0}'}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
+                      <StackPanel Grid.Row="1" Margin="0,9,0,0" Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{DynamicResource CliLabel}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
+                        <TextBlock Text="{DynamicResource MiddleDot}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
+                        <TextBlock Text="{Binding ShortName}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
+                      </StackPanel>
                       <StackPanel Grid.Row="2" Margin="0,9,0,0" Spacing="3">
-                        <TextBlock Text="{Binding DependencySummary, StringFormat='相依性：{0}'}" Foreground="{DynamicResource MutedBrush}" FontSize="10" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                          <TextBlock Text="{DynamicResource DependencyLabel}" Foreground="{DynamicResource MutedBrush}" FontSize="10" />
+                          <TextBlock Text="{Binding DependencySummary}" Foreground="{DynamicResource MutedBrush}" FontSize="10" TextWrapping="Wrap" />
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="10">
                           <TextBlock Text="{Binding AvailabilityLabel}" Foreground="#027A48" FontSize="10" />
                           <TextBlock Text="{Binding RiskLabel}" Foreground="#B54708" FontSize="10" />
@@ -187,7 +200,7 @@
               <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
                 <StackPanel Spacing="6">
                   <TextBlock Text="{DynamicResource TargetProject}" FontSize="12" FontWeight="SemiBold" />
-                  <ComboBox ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}" PlaceholderText="請先選擇工作區">
+                  <ComboBox ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}" PlaceholderText="{DynamicResource TargetProjectPlaceholder}" AutomationProperties.Name="{DynamicResource TargetProject}" TabIndex="6">
                     <ComboBox.ItemTemplate>
                       <DataTemplate DataType="domain:ProjectInfo">
                         <TextBlock Text="{Binding DisplayText}" />
@@ -202,20 +215,20 @@
                   <DataTemplate DataType="vm:TextParameterFieldViewModel">
                     <StackPanel Spacing="5" Margin="0,0,0,10">
                       <TextBlock Text="{Binding Definition.DisplayName}" FontSize="12" FontWeight="SemiBold" />
-                      <TextBox Text="{Binding TextValue, UpdateSourceTrigger=PropertyChanged}" PasswordChar="{Binding PasswordChar}" PlaceholderText="{DynamicResource ParameterValuePlaceholder}" />
+                      <TextBox Text="{Binding TextValue, UpdateSourceTrigger=PropertyChanged}" PasswordChar="{Binding PasswordChar}" PlaceholderText="{DynamicResource ParameterValuePlaceholder}" AutomationProperties.Name="{Binding Definition.DisplayName}" />
                       <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#D92D20" FontSize="11" TextWrapping="Wrap" />
                     </StackPanel>
                   </DataTemplate>
                   <DataTemplate DataType="vm:EnumerationParameterFieldViewModel">
                     <StackPanel Spacing="5" Margin="0,0,0,10">
                       <TextBlock Text="{Binding Definition.DisplayName}" FontSize="12" FontWeight="SemiBold" />
-                      <ComboBox ItemsSource="{Binding AllowedValues}" SelectedItem="{Binding SelectedValue}" />
+                      <ComboBox ItemsSource="{Binding AllowedValues}" SelectedItem="{Binding SelectedValue}" AutomationProperties.Name="{Binding Definition.DisplayName}" />
                       <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#D92D20" FontSize="11" TextWrapping="Wrap" />
                     </StackPanel>
                   </DataTemplate>
                   <DataTemplate DataType="vm:BooleanParameterFieldViewModel">
                     <StackPanel Spacing="5" Margin="0,0,0,10">
-                      <CheckBox Content="{Binding Definition.DisplayName}" IsChecked="{Binding IsChecked}" />
+                      <CheckBox Content="{Binding Definition.DisplayName}" IsChecked="{Binding IsChecked}" AutomationProperties.Name="{Binding Definition.DisplayName}" />
                       <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#D92D20" FontSize="11" TextWrapping="Wrap" />
                     </StackPanel>
                   </DataTemplate>
@@ -229,19 +242,22 @@
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="{DynamicResource CommandPreview}" Foreground="White" FontWeight="SemiBold" />
                 <Border Grid.Column="1" Background="#344054" CornerRadius="12" Padding="8,4">
-                  <TextBlock Text="唯讀" Foreground="#D0D5DD" FontSize="10" />
+                  <TextBlock Text="{DynamicResource ReadOnly}" Foreground="#D0D5DD" FontSize="10" />
                 </Border>
               </Grid>
               <TextBlock Text="{Binding CommandPreviewText}" Foreground="#BDB4FE" FontFamily="Menlo" FontSize="12" TextWrapping="Wrap" />
-              <TextBlock Text="{Binding WorkingDirectoryText, StringFormat='工作目錄：{0}'}" Foreground="#98A2B3" FontSize="10" TextTrimming="CharacterEllipsis" />
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="{DynamicResource WorkingDirectoryLabel}" Foreground="#98A2B3" FontSize="10" />
+                <TextBlock Text="{Binding WorkingDirectoryText}" Foreground="#98A2B3" FontSize="10" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
             </StackPanel>
           </Border>
 
           <Border Grid.Row="3" Margin="0,16,0,0" Background="#FFFAEB" BorderBrush="#FEDF89" BorderThickness="1" CornerRadius="10" Padding="14">
             <StackPanel Orientation="Horizontal" Spacing="10">
-              <TextBlock Text="!" Foreground="#B54708" FontSize="18" FontWeight="Bold" />
+              <TextBlock Text="{DynamicResource AlertSymbol}" Foreground="#B54708" FontSize="18" FontWeight="Bold" />
               <StackPanel>
-                <TextBlock Text="平台與安全檢查" Foreground="#93370D" FontWeight="SemiBold" FontSize="12" />
+                <TextBlock Text="{DynamicResource SafetyCheckHeading}" Foreground="#93370D" FontWeight="SemiBold" FontSize="12" />
                 <TextBlock Text="{Binding AvailabilityMessage}" Foreground="#B54708" FontSize="11" TextWrapping="Wrap" />
               </StackPanel>
             </StackPanel>
@@ -249,16 +265,16 @@
 
           <Grid Grid.Row="4" Margin="0,20,0,28" RowDefinitions="Auto,Auto,Auto">
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-              <TextBlock Text="所有操作都會先顯示命令與目標路徑。" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Classes="secondary" Content="清除結果" Command="{Binding ClearResultCommand}" />
-              <Button Grid.Column="2" Classes="primary" Content="{DynamicResource RunDemo}" Command="{Binding RequestExecutionCommand}" IsEnabled="{Binding CanExecuteSelectedFeature}" />
+              <TextBlock Text="{DynamicResource OperationPreviewHint}" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource ClearResult}" Command="{Binding ClearResultCommand}" AutomationProperties.Name="{DynamicResource ClearResult}" TabIndex="8" />
+              <Button Grid.Column="2" Classes="primary" Content="{DynamicResource RunDemo}" Command="{Binding RequestExecutionCommand}" IsEnabled="{Binding CanExecuteSelectedFeature}" AutomationProperties.Name="{DynamicResource RunDemo}" TabIndex="9" />
             </Grid>
 
             <Border Grid.Row="1" IsVisible="{Binding IsRunning}" Margin="0,16,0,0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="15">
               <StackPanel Spacing="10">
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBlock Text="{Binding ExecutionStageLabel}" FontWeight="SemiBold" />
-                  <Button Grid.Column="1" Content="取消" Command="{Binding CancelExecutionCommand}" />
+                  <Button Grid.Column="1" Content="{DynamicResource Cancel}" Command="{Binding CancelExecutionCommand}" AutomationProperties.Name="{DynamicResource Cancel}" />
                 </Grid>
                 <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
                 <ProgressBar IsIndeterminate="True" Height="5" />
@@ -346,8 +362,8 @@
               <StackPanel Spacing="12">
                 <TextBlock Text="{DynamicResource SettingsPageHeading}" FontSize="18" FontWeight="Bold" />
                 <TextBlock Text="{DynamicResource SettingsPageDescription}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
-                <CheckBox Content="{DynamicResource EnableSafeModePrompt}" IsChecked="True" />
-                <CheckBox Content="{DynamicResource ShowConfirmationBeforeExecution}" IsChecked="True" />
+                <CheckBox Content="{DynamicResource EnableSafeModePrompt}" IsChecked="True" AutomationProperties.Name="{DynamicResource EnableSafeModePrompt}" />
+                <CheckBox Content="{DynamicResource ShowConfirmationBeforeExecution}" IsChecked="True" AutomationProperties.Name="{DynamicResource ShowConfirmationBeforeExecution}" />
               </StackPanel>
             </Border>
           </StackPanel>
@@ -359,7 +375,7 @@
       <Border Width="520" Background="White" CornerRadius="14" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel Spacing="16">
           <Border Width="44" Height="44" Background="#FFF4E5" CornerRadius="22" HorizontalAlignment="Left">
-            <TextBlock Text="!" Foreground="#B54708" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Text="{DynamicResource AlertSymbol}" Foreground="#B54708" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Border>
           <StackPanel Spacing="6">
             <TextBlock Text="{Binding ConfirmationTitle}" FontSize="22" FontWeight="Bold" />
@@ -372,9 +388,9 @@
             <TextBlock Text="{Binding ConfirmationDetails}" Foreground="#B42318" TextWrapping="Wrap" FontSize="12" />
           </Border>
           <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-            <TextBlock Text="SAFE DEMO" Foreground="#7F56D9" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
-            <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Cancel}" Command="{Binding CancelConfirmationCommand}" />
-            <Button Grid.Column="2" Classes="primary" Content="{DynamicResource Confirm}" Command="{Binding ConfirmExecutionCommand}" />
+            <TextBlock Text="{DynamicResource SafeDemoLabel}" Foreground="#7F56D9" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Cancel}" Command="{Binding CancelConfirmationCommand}" AutomationProperties.Name="{DynamicResource Cancel}" />
+            <Button Grid.Column="2" Classes="primary" Content="{DynamicResource Confirm}" Command="{Binding ConfirmExecutionCommand}" AutomationProperties.Name="{DynamicResource Confirm}" />
           </Grid>
         </StackPanel>
       </Border>

@@ -5,6 +5,13 @@ namespace DotNetScaffoldStudio.Infrastructure;
 
 public sealed class DemoExecutionService : IDemoExecutionService
 {
+    private readonly IUiTextProvider _text;
+
+    public DemoExecutionService(IUiTextProvider? text = null)
+    {
+        _text = text ?? new DefaultUiTextProvider();
+    }
+
     public async Task<DemoExecutionResult> ExecuteAsync(
         CommandPreview command,
         IProgress<string> progress,
@@ -12,11 +19,11 @@ public sealed class DemoExecutionService : IDemoExecutionService
     {
         var steps = new[]
         {
-            "[Demo] 正在驗證目標專案…",
-            "[Demo] 正在檢查所需工具與套件…",
-            $"[Demo] 預備執行：{command.DisplayText}",
-            "[Demo] 正在模擬產生檔案…",
-            "[Demo] 正在比較 Git 與檔案差異…"
+            _text.Get("Execution.StepValidate"),
+            _text.Get("Execution.StepDependencies"),
+            _text.Format("Execution.StepPrepare", command.DisplayText),
+            _text.Get("Execution.StepGenerate"),
+            _text.Get("Execution.StepDiff")
         };
 
         foreach (var step in steps)
@@ -31,13 +38,13 @@ public sealed class DemoExecutionService : IDemoExecutionService
 
         return new DemoExecutionResult(
             true,
-            "示意產生成功",
-            "這是流程 Demo；沒有執行外部 CLI，也沒有修改工作區。正式版本將在此顯示真實結束碼、耗時與差異。",
+            _text.Get("Result.DemoTitle"),
+            _text.Get("Result.DemoSummary"),
             steps,
             [$"A  {generatedFolder}/{generatedName}.cs"],
             ["M  Program.cs"],
             "demo/main",
-            "工作樹包含 1 個執行前既有變更；Demo 不會修改工作區。");
+            _text.Get("Result.DemoGitStatus"));
     }
 
     private static string? GetArgumentValue(IReadOnlyList<string> arguments, string option)

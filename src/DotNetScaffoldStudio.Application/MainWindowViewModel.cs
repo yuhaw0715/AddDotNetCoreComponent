@@ -11,14 +11,15 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly IDemoExecutionService _executionService;
     private readonly ParameterValidator _parameterValidator;
     private readonly IFileRevealService _fileRevealService;
+    private readonly IUiTextProvider _text;
     private CancellationTokenSource? _executionCancellation;
     private NavigationItem? _selectedNavigation;
     private FeatureDefinition? _selectedFeature;
     private ProjectInfo? _selectedProject;
-    private string _workspacePath = "尚未選擇工作區";
-    private string _componentName = "OrdersController";
-    private string _outputPath = "Controllers";
-    private string _selectedTemplateMode = "含讀寫動作";
+    private string _workspacePath = string.Empty;
+    private string _componentName = string.Empty;
+    private string _outputPath = string.Empty;
+    private string _selectedTemplateMode = string.Empty;
     private string _featureSearchText = string.Empty;
     private bool _useAsyncActions = true;
     private bool _includeApiActions;
@@ -28,14 +29,14 @@ public sealed class MainWindowViewModel : ObservableObject
     private bool _isRunning;
     private bool _hasResult;
     private ExecutionStage _executionStage;
-    private string _statusMessage = "Demo 模式 · 不會修改任何檔案";
-    private string _executionOutput = "尚未執行命令。";
+    private string _statusMessage = string.Empty;
+    private string _executionOutput = string.Empty;
     private string _resultTitle = string.Empty;
     private string _resultSummary = string.Empty;
     private string _gitDifferenceSummary = string.Empty;
 
     public MainWindowViewModel(IWorkspaceService workspaceService, IDemoExecutionService executionService)
-        : this(workspaceService, executionService, new ParameterValidator(), new DemoFileRevealService())
+        : this(workspaceService, executionService, new ParameterValidator(), new DemoFileRevealService(), new DefaultUiTextProvider())
     {
     }
 
@@ -43,7 +44,7 @@ public sealed class MainWindowViewModel : ObservableObject
         IWorkspaceService workspaceService,
         IDemoExecutionService executionService,
         ParameterValidator parameterValidator)
-        : this(workspaceService, executionService, parameterValidator, new DemoFileRevealService())
+        : this(workspaceService, executionService, parameterValidator, new DemoFileRevealService(), new DefaultUiTextProvider())
     {
     }
 
@@ -52,11 +53,28 @@ public sealed class MainWindowViewModel : ObservableObject
         IDemoExecutionService executionService,
         ParameterValidator parameterValidator,
         IFileRevealService fileRevealService)
+        : this(workspaceService, executionService, parameterValidator, fileRevealService, new DefaultUiTextProvider())
+    {
+    }
+
+    public MainWindowViewModel(
+        IWorkspaceService workspaceService,
+        IDemoExecutionService executionService,
+        ParameterValidator parameterValidator,
+        IFileRevealService fileRevealService,
+        IUiTextProvider text)
     {
         _workspaceService = workspaceService;
         _executionService = executionService;
         _parameterValidator = parameterValidator;
         _fileRevealService = fileRevealService;
+        _text = text;
+        _workspacePath = _text.Get("Status.WorkspacePlaceholder");
+        _statusMessage = _text.Get("Status.DemoSafe");
+        _executionOutput = _text.Get("Status.ExecutionOutputEmpty");
+        _componentName = _text.Get("Defaults.ControllerName");
+        _outputPath = _text.Get("Defaults.OutputPath");
+        _selectedTemplateMode = _text.Get("Template.ReadWrite");
 
         ScanWorkspaceCommand = new AsyncRelayCommand(ScanWorkspaceAsync, CanScanWorkspace);
         UseDemoWorkspaceCommand = new RelayCommand(UseDemoWorkspace);
@@ -82,7 +100,13 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<ProjectInfo> Projects { get; } = [];
     public ObservableCollection<string> ResultFiles { get; } = [];
     public ObservableCollection<string> ExistingChanges { get; } = [];
-    public IReadOnlyList<string> TemplateModes { get; } = ["空白", "含讀寫動作", "MVC CRUD", "REST API"];
+    public IReadOnlyList<string> TemplateModes =>
+    [
+        _text.Get("Template.Empty"),
+        _text.Get("Template.ReadWrite"),
+        _text.Get("Template.MvcCrud"),
+        _text.Get("Template.RestApi")
+    ];
 
     public IAsyncRelayCommand ScanWorkspaceCommand { get; }
     public IRelayCommand UseDemoWorkspaceCommand { get; }
@@ -126,15 +150,17 @@ public sealed class MainWindowViewModel : ObservableObject
 
             ComponentName = value?.Id switch
             {
-                "migration-add" => "AddOrderStatus",
-                "database-update" => "Latest",
-                "webapi" or "mvc" or "blazor" or "console" => "MyNewApp",
-                "razorcomponent" => "OrderSummary",
-                "page" => "Orders",
-                _ => "OrdersController"
+                "migration-add" => _text.Get("Defaults.MigrationName"),
+                "database-update" => _text.Get("Defaults.LatestMigration"),
+                "webapi" or "mvc" or "blazor" or "console" => _text.Get("Defaults.ProjectName"),
+                "razorcomponent" => _text.Get("Defaults.RazorComponentName"),
+                "page" => _text.Get("Defaults.PageName"),
+                _ => _text.Get("Defaults.ControllerName")
             };
 
-            OutputPath = value?.Category == "project" ? "./generated" : "Controllers";
+            OutputPath = value?.Category == "project"
+                ? _text.Get("Defaults.GeneratedOutputPath")
+                : _text.Get("Defaults.OutputPath");
             ReplaceParameterEditor(value);
             OnPropertyChanged(nameof(SelectedFeatureTitle));
             OnPropertyChanged(nameof(SelectedFeatureDescription));
@@ -274,24 +300,27 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool IsDatabaseRisk => CurrentConfirmationKind == ConfirmationKind.DatabaseUpdate;
     public string ConfirmationTitle => CurrentConfirmationKind switch
     {
-        ConfirmationKind.FileOverwrite => "確認覆寫既有檔案",
-        ConfirmationKind.ToolInstallation => "確認安裝工作區本機工具",
-        ConfirmationKind.DatabaseUpdate => "確認更新資料庫",
-        _ => "確認示意執行"
+        ConfirmationKind.FileOverwrite => _text.Get("Confirmation.OverwriteTitle"),
+        ConfirmationKind.ToolInstallation => _text.Get("Confirmation.ToolTitle"),
+        ConfirmationKind.DatabaseUpdate => _text.Get("Confirmation.DatabaseTitle"),
+        _ => _text.Get("Confirmation.GeneralTitle")
     };
     public string ConfirmationMessage => CurrentConfirmationKind switch
     {
-        ConfirmationKind.FileOverwrite => "此操作可能覆寫目前工作區內的檔案，請確認輸出位置與命令。",
-        ConfirmationKind.ToolInstallation => "此操作只會使用目前工作區的本機工具資訊清單，不會執行全域工具安裝。",
-        ConfirmationKind.DatabaseUpdate => "此操作會變更目標資料庫；請確認目標專案、DbContext 與連線資訊來源。",
-        _ => "請再次確認目標與命令。Demo 不會執行外部 CLI，也不會修改檔案。"
+        ConfirmationKind.FileOverwrite => _text.Get("Confirmation.OverwriteMessage"),
+        ConfirmationKind.ToolInstallation => _text.Get("Confirmation.ToolMessage"),
+        ConfirmationKind.DatabaseUpdate => _text.Get("Confirmation.DatabaseMessage"),
+        _ => _text.Get("Confirmation.GeneralMessage")
     };
     public string ConfirmationDetails => CurrentConfirmationKind switch
     {
-        ConfirmationKind.FileOverwrite => "風險：既有檔案可能被覆寫；覆寫選項必須由使用者明確啟用。",
-        ConfirmationKind.ToolInstallation => "範圍：工作區 .config/dotnet-tools.json；禁止 --global。",
-        ConfirmationKind.DatabaseUpdate => $"目標專案：{SelectedProject?.Path ?? "尚未選擇"}\nDbContext：{ParameterEditor?.GetTextValue("dbContext") ?? "依專案設定"}\n連線來源：具名連線或專案設定（不顯示機密值）",
-        _ => "安全 Demo 模式：不會啟動外部 CLI，也不會修改檔案或資料庫。"
+        ConfirmationKind.FileOverwrite => _text.Get("Confirmation.OverwriteDetails"),
+        ConfirmationKind.ToolInstallation => _text.Get("Confirmation.ToolDetails"),
+        ConfirmationKind.DatabaseUpdate => _text.Format(
+            "Confirmation.DatabaseDetails",
+            SelectedProject?.Path ?? _text.Get("Status.WorkspacePlaceholder"),
+            ParameterEditor?.GetTextValue("dbContext") ?? _text.Get("Confirmation.DbContextFallback")),
+        _ => _text.Get("Confirmation.GeneralDetails")
     };
 
     public bool IsNavigationCollapsed
@@ -361,12 +390,12 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public string ExecutionStageLabel => ExecutionStage switch
     {
-        ExecutionStage.AwaitingConfirmation => "等待確認",
-        ExecutionStage.Executing => "執行中",
-        ExecutionStage.Succeeded => "成功",
-        ExecutionStage.Failed => "失敗",
-        ExecutionStage.Cancelled => "已取消",
-        _ => "閒置"
+        ExecutionStage.AwaitingConfirmation => _text.Get("Stage.AwaitingConfirmation"),
+        ExecutionStage.Executing => _text.Get("Stage.Executing"),
+        ExecutionStage.Succeeded => _text.Get("Stage.Succeeded"),
+        ExecutionStage.Failed => _text.Get("Stage.Failed"),
+        ExecutionStage.Cancelled => _text.Get("Stage.Cancelled"),
+        _ => _text.Get("Stage.Idle")
     };
 
     public string StatusMessage
@@ -415,37 +444,37 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool CanExecuteSelectedFeature =>
         SelectedFeature?.Availability == FeatureAvailability.Available &&
         (!RequiresTargetProject || SelectedProject is not null);
-    public string SelectedFeatureTitle => SelectedFeature?.DisplayName ?? "選擇一項功能";
-    public string SelectedFeatureDescription => SelectedFeature?.Description ?? "從左側選擇功能群組，再挑選要執行的項目。";
+    public string SelectedFeatureTitle => SelectedFeature?.DisplayName ?? _text.Get("Feature.Select");
+    public string SelectedFeatureDescription => SelectedFeature?.Description ?? _text.Get("Feature.DescriptionPlaceholder");
     public string SelectedFeatureBadge => SelectedFeature?.Badge ?? string.Empty;
     public string AvailabilityMessage => RequiresTargetProject && SelectedProject is null
-        ? "此功能需要先選擇現有的目標專案。"
-        : SelectedFeature?.AvailabilityReason ?? "此功能可在目前平台使用。";
+        ? _text.Get("Feature.TargetProjectRequired")
+        : SelectedFeature?.AvailabilityReason ?? _text.Get("Feature.AvailableOnPlatform");
     public string ValidationMessage => ParameterEditor?.FirstErrorMessage ??
-        (string.IsNullOrWhiteSpace(ComponentName) ? "名稱為必填欄位。" : string.Empty);
-    public string CommandPreviewText => BuildCommandPreview()?.DisplayText ?? "選擇功能後將顯示命令預覽";
+        (string.IsNullOrWhiteSpace(ComponentName) ? _text.Get("Validation.RequiredName") : string.Empty);
+    public string CommandPreviewText => BuildCommandPreview()?.DisplayText ?? _text.Get("Feature.CommandPreviewPlaceholder");
     public string WorkingDirectoryText => BuildCommandPreview()?.WorkingDirectory ?? WorkspacePath;
-    public string FeatureCountSummary => $"{VisibleFeatures.Count} 項功能";
+    public string FeatureCountSummary => _text.Format("Feature.Count", VisibleFeatures.Count);
 
     public async Task LoadWorkspaceAsync(string path)
     {
         await LoadWorkspaceCoreAsync(path);
     }
 
-    private bool CanScanWorkspace() => !IsScanning && !string.IsNullOrWhiteSpace(WorkspacePath) && WorkspacePath != "尚未選擇工作區";
+    private bool CanScanWorkspace() => !IsScanning && !string.IsNullOrWhiteSpace(WorkspacePath) && !IsWorkspacePlaceholder(WorkspacePath);
 
     private Task ScanWorkspaceAsync() => LoadWorkspaceCoreAsync(WorkspacePath);
 
     private async Task LoadWorkspaceCoreAsync(string path)
     {
-        if (string.IsNullOrWhiteSpace(path) || path == "尚未選擇工作區")
+        if (string.IsNullOrWhiteSpace(path) || IsWorkspacePlaceholder(path))
         {
-            StatusMessage = "請先選擇有效的工作區。";
+            StatusMessage = _text.Get("Status.InvalidWorkspace");
             return;
         }
 
         IsScanning = true;
-        StatusMessage = "正在掃描 .NET 專案…";
+        StatusMessage = _text.Get("Status.Scanning");
 
         try
         {
@@ -464,14 +493,14 @@ public sealed class MainWindowViewModel : ObservableObject
 
             SelectedProject = Projects.Count == 1 ? Projects[0] : null;
             StatusMessage = Projects.Count == 0
-                ? "找不到 .csproj；仍可使用專案範本功能。"
+                ? _text.Get("Status.NoProjects")
                 : Projects.Count == 1
-                    ? "已找到 1 個專案，已自動選取目標。"
-                    : $"已找到 {Projects.Count} 個專案，請選擇目標。";
+                    ? _text.Get("Status.SingleProject")
+                    : _text.Format("Status.MultipleProjects", Projects.Count);
         }
         catch (Exception exception)
         {
-            StatusMessage = $"無法載入工作區：{exception.Message}";
+            StatusMessage = _text.Format("Status.LoadFailure", exception.Message);
         }
         finally
         {
@@ -492,7 +521,7 @@ public sealed class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(IsProjectsEmpty));
         OnPropertyChanged(nameof(HasProjects));
         SelectedProject = Projects[0];
-        StatusMessage = "已載入示範工作區 · 2 個專案";
+        StatusMessage = _text.Get("Status.DemoWorkspaceLoaded");
     }
 
     private bool CanRequestExecution() =>
@@ -507,8 +536,8 @@ public sealed class MainWindowViewModel : ObservableObject
         ExecutionStage = ExecutionStage.AwaitingConfirmation;
         IsConfirmationVisible = true;
         StatusMessage = IsHighRiskConfirmation
-            ? "等待高風險操作二次確認"
-            : "請確認命令與目標位置";
+            ? _text.Get("Status.HighRiskConfirmation")
+            : _text.Get("Status.ConfirmationRequired");
     }
 
     private async Task ConfirmExecutionAsync()
@@ -524,7 +553,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ExecutionStage = ExecutionStage.Executing;
         HasResult = false;
         ExecutionOutput = string.Empty;
-        StatusMessage = "Demo 執行中…";
+        StatusMessage = _text.Get("Status.DemoExecuting");
         _executionCancellation = new CancellationTokenSource();
         var progress = new Progress<string>(line => ExecutionOutput += $"{line}{Environment.NewLine}");
 
@@ -546,22 +575,26 @@ public sealed class MainWindowViewModel : ObservableObject
             }
 
             GitDifferenceSummary = result.GitStatus ??
-                $"Git 分支：{result.GitBranch ?? "非 Git 工作區"}；執行後新增 {ResultFiles.Count} 項差異，執行前既有 {ExistingChanges.Count} 項變更。";
+                _text.Format(
+                    "Result.GitDifferenceFallback",
+                    result.GitBranch ?? _text.Get("Result.NonGitWorkspace"),
+                    ResultFiles.Count,
+                    ExistingChanges.Count);
 
             HasResult = true;
             ExecutionStage = result.Succeeded ? ExecutionStage.Succeeded : ExecutionStage.Failed;
-            StatusMessage = result.Succeeded ? "示意流程已完成" : "示意流程失敗";
+            StatusMessage = result.Succeeded ? _text.Get("Status.DemoCompleted") : _text.Get("Status.DemoFailed");
         }
         catch (OperationCanceledException)
         {
-            ResultTitle = "已取消示意執行";
-            ResultSummary = "正式版本會在取消後重新掃描檔案差異，不會假設工作區未被修改。";
+            ResultTitle = _text.Get("Result.CancelledTitle");
+            ResultSummary = _text.Get("Result.CancelledSummary");
             ResultFiles.Clear();
             ExistingChanges.Clear();
-            GitDifferenceSummary = "取消後已重新掃描差異；Demo 未修改工作區。";
+            GitDifferenceSummary = _text.Get("Result.CancelledDifference");
             HasResult = true;
             ExecutionStage = ExecutionStage.Cancelled;
-            StatusMessage = "已取消";
+            StatusMessage = _text.Get("Status.Cancelled");
         }
         finally
         {
@@ -639,13 +672,13 @@ public sealed class MainWindowViewModel : ObservableObject
         RequestExecutionCommand.NotifyCanExecuteChanged();
     }
 
-    private static CatalogFeature CreateParameterSchema(FeatureDefinition feature)
+    private CatalogFeature CreateParameterSchema(FeatureDefinition feature)
     {
         var parameters = new List<ParameterDefinition>
         {
-            new("name", "名稱", ParameterValueKind.Text, isRequired: true),
-            new("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true),
-            new("force", "覆寫既有輸出", ParameterValueKind.Boolean, isAdvanced: true)
+            new("name", _text.Get("Parameter.Name"), ParameterValueKind.Text, isRequired: true),
+            new("output", _text.Get("Parameter.OutputPath"), ParameterValueKind.Path, isAdvanced: true),
+            new("force", _text.Get("Parameter.ForceOutput"), ParameterValueKind.Boolean, isAdvanced: true)
         };
         var constraints = new List<ParameterConstraint>
         {
@@ -655,14 +688,24 @@ public sealed class MainWindowViewModel : ObservableObject
 
         if (feature.Category == "scaffolding")
         {
-            parameters.Add(new ParameterDefinition("variant", "範本模式", ParameterValueKind.Enumeration, allowedValues: ["空白", "含讀寫動作", "MVC CRUD", "REST API"]));
-            parameters.Add(new ParameterDefinition("model", "模型", ParameterValueKind.Text, isAdvanced: true));
-            parameters.Add(new ParameterDefinition("dataContext", "DbContext", ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition(
+                "variant",
+                _text.Get("Parameter.TemplateMode"),
+                ParameterValueKind.Enumeration,
+                allowedValues:
+                [
+                    _text.Get("Template.Empty"),
+                    _text.Get("Template.ReadWrite"),
+                    _text.Get("Template.MvcCrud"),
+                    _text.Get("Template.RestApi")
+                ]));
+            parameters.Add(new ParameterDefinition("model", _text.Get("Parameter.Model"), ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition("dataContext", _text.Get("Parameter.DbContext"), ParameterValueKind.Text, isAdvanced: true));
         }
         else if (feature.Category == "efcore")
         {
-            parameters.Add(new ParameterDefinition("connection", "具名連線或來源", ParameterValueKind.Secret, isAdvanced: true));
-            parameters.Add(new ParameterDefinition("dbContext", "DbContext", ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition("connection", _text.Get("Parameter.NamedConnection"), ParameterValueKind.Secret, isAdvanced: true));
+            parameters.Add(new ParameterDefinition("dbContext", _text.Get("Parameter.DbContext"), ParameterValueKind.Text, isAdvanced: true));
         }
 
         return new CatalogFeature(
@@ -703,22 +746,22 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         HasResult = false;
         ExecutionStage = ExecutionStage.Idle;
-        ExecutionOutput = "尚未執行命令。";
+        ExecutionOutput = _text.Get("Status.ExecutionOutputEmpty");
         ResultFiles.Clear();
         ExistingChanges.Clear();
         GitDifferenceSummary = string.Empty;
-        StatusMessage = "Demo 模式 · 不會修改任何檔案";
+        StatusMessage = _text.Get("Status.DemoSafe");
     }
 
     private bool CanOpenResultInFinderCommand() => CanOpenResultInFinder;
 
     private async Task OpenResultInFinderAsync()
     {
-        var directory = WorkspacePath == "尚未選擇工作區"
+        var directory = IsWorkspacePlaceholder(WorkspacePath)
             ? OutputPath
             : Path.Combine(WorkspacePath, OutputPath);
         var result = await _fileRevealService.RevealAsync(directory, CancellationToken.None);
-        StatusMessage = result.Message;
+        StatusMessage = result.Succeeded ? result.Message : _text.Format("Status.FinderFailure", result.Message);
     }
 
     private CommandPreview? BuildCommandPreview()
@@ -729,15 +772,17 @@ public sealed class MainWindowViewModel : ObservableObject
         }
 
         var projectPath = SelectedProject?.Path ?? "./src/MyApp/MyApp.csproj";
-        var workingDirectory = WorkspacePath == "尚未選擇工作區" ? "/path/to/workspace" : WorkspacePath;
+        var workingDirectory = IsWorkspacePlaceholder(WorkspacePath)
+            ? _text.Get("Defaults.WorkingDirectory")
+            : WorkspacePath;
         List<string> arguments;
 
         switch (SelectedFeature.Id)
         {
             case "controller":
                 arguments = ["aspnet-codegenerator", "controller", "--controllerName", ComponentName, "--project", projectPath, "--relativeFolderPath", OutputPath];
-                if (SelectedTemplateMode == "含讀寫動作") arguments.Add("--readWriteActions");
-                if (SelectedTemplateMode == "REST API" || IncludeApiActions) arguments.Add("--restWithNoViews");
+                if (SelectedTemplateMode == _text.Get("Template.ReadWrite")) arguments.Add("--readWriteActions");
+                if (SelectedTemplateMode == _text.Get("Template.RestApi") || IncludeApiActions) arguments.Add("--restWithNoViews");
                 if (UseAsyncActions) arguments.Add("--useAsyncActions");
                 break;
             case "minimalapi":
@@ -779,4 +824,7 @@ public sealed class MainWindowViewModel : ObservableObject
         SelectedFeature?.Risk == FeatureRisk.Normal && ParameterEditor?.GetBooleanValue("force") == true
             ? FeatureRisk.FileOverwrite
             : SelectedFeature?.Risk ?? FeatureRisk.Normal;
+
+    private bool IsWorkspacePlaceholder(string path) =>
+        string.Equals(path, _text.Get("Status.WorkspacePlaceholder"), StringComparison.Ordinal);
 }

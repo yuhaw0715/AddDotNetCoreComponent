@@ -12,7 +12,7 @@ public sealed partial class MainWindow : Window
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "選擇 .NET 工作區",
+            Title = (Avalonia.Application.Current?.Resources["ChooseWorkspaceDialogTitle"] as string) ?? string.Empty,
             AllowMultiple = false
         });
 

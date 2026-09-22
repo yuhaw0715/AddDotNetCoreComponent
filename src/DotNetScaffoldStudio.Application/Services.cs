@@ -4,8 +4,15 @@ namespace DotNetScaffoldStudio.Application;
 
 public sealed class DemoFileRevealService : IFileRevealService
 {
+    private readonly IUiTextProvider _text;
+
+    public DemoFileRevealService(IUiTextProvider? text = null)
+    {
+        _text = text ?? new DefaultUiTextProvider();
+    }
+
     public Task<FileRevealResult> RevealAsync(string path, CancellationToken cancellationToken) =>
-        Task.FromResult(new FileRevealResult(true, $"Demo 已準備在 Finder 顯示：{path}"));
+        Task.FromResult(new FileRevealResult(true, _text.Format("FileReveal.DemoReady", path)));
 }
 
 public interface IWorkspaceService

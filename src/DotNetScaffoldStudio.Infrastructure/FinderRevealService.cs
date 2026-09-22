@@ -6,12 +6,19 @@ namespace DotNetScaffoldStudio.Infrastructure;
 
 public sealed class FinderRevealService : IFileRevealService
 {
+    private readonly IUiTextProvider _text;
+
+    public FinderRevealService(IUiTextProvider? text = null)
+    {
+        _text = text ?? new DefaultUiTextProvider();
+    }
+
     public async Task<FileRevealResult> RevealAsync(string path, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         if (!OperatingSystem.IsMacOS())
         {
-            return new FileRevealResult(false, "Finder 開啟動作只支援 macOS。");
+            return new FileRevealResult(false, _text.Get("FileReveal.UnsupportedPlatform"));
         }
 
         var startInfo = new ProcessStartInfo
@@ -27,12 +34,12 @@ public sealed class FinderRevealService : IFileRevealService
         using var process = new Process { StartInfo = startInfo };
         if (!process.Start())
         {
-            return new FileRevealResult(false, "無法啟動 Finder。");
+            return new FileRevealResult(false, _text.Get("FileReveal.StartFailure"));
         }
 
         await process.WaitForExitAsync(cancellationToken);
         return process.ExitCode == 0
-            ? new FileRevealResult(true, "已要求 Finder 顯示輸出位置。")
-            : new FileRevealResult(false, "Finder 無法顯示輸出位置。");
+            ? new FileRevealResult(true, _text.Get("FileReveal.Success"))
+            : new FileRevealResult(false, _text.Get("FileReveal.Failure"));
     }
 }

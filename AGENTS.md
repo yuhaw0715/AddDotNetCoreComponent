@@ -31,6 +31,7 @@
 - OpenSpec 7.4 已完成：`ParameterEditorViewModel` 依 schema 建立 typed 文字、列舉、布林與機密欄位，支援進階欄位切換、欄位級驗證、即時命令預覽與 Secret 遮罩。下一個待辦是 7.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 7.5 已完成：確認流程依一般、檔案覆寫、本機工具安裝與 `database update` 分類，顯示相應風險與安全範圍；取消確認只關閉對話框，不呼叫 Demo 執行服務。下一個待辦是 7.6，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 7.6 已完成：Avalonia Demo 顯示執行階段、即時輸出、成功/失敗/取消、執行前既有與執行後檔案差異、Git 摘要，並以結構化 `open -R` Finder adapter 提供輸出位置動作。下一個待辦是 7.7，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 7.7 已完成：固定 UI、ViewModel 狀態與 Demo/Finder 回饋文字均由可替換的繁體中文資源提供，互動控制項補上可存取名稱與鍵盤焦點順序，狀態同時以文字呈現；資源掃描、鍵盤標記測試與完整測試均通過。下一個待辦是 8.1，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。
@@ -76,7 +77,7 @@ packaging/
 - 優先使用不可變 record/value object 表達功能、參數、命令、風險與結果。
 - 非同步 I/O 與程序工作必須接受並傳遞 `CancellationToken`；不得使用 `.Result` 或 `.Wait()` 阻塞 UI thread。
 - 所有使用者可見固定文字必須放在資源檔，不得散落硬編碼。
-- 現有 Demo XAML 尚有未資源化文字，屬 OpenSpec 7.7 的待辦；新增文字不得擴大這項技術債。
+- Avalonia 固定顯示文字集中於 `Strings.zh-TW.axaml`，ViewModel 與 adapter 透過 `IUiTextProvider` 取得；新增使用者可見文字不得繞過資源層。
 - 不新增不必要的套件；新增套件時要說明用途、鎖定相容版本並補測試。
 
 ## CLI 與安全硬性規則
