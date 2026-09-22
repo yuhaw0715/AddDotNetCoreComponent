@@ -81,6 +81,7 @@ public sealed class DependencyDiscoveryService(
         requirement.Kind switch
         {
             DependencyKind.LocalTool => DetectLocalTool(requirement, workspaceRoot, environment),
+            DependencyKind.ToolManifest => DetectToolManifest(requirement, workspaceRoot, environment),
             DependencyKind.NuGetPackage => DetectPackage(requirement, targetProjectPath, packageResult),
             DependencyKind.DotNetSdk => DetectSdk(requirement, environment),
             DependencyKind.Workload => DetectWorkload(requirement, environment),
@@ -113,6 +114,25 @@ public sealed class DependencyDiscoveryService(
         return tool is null
             ? Missing(requirement, source, "本機工具清單中沒有此工具。")
             : EvaluateVersion(requirement, tool.Version, source);
+    }
+
+    private static DependencyCapability DetectToolManifest(
+        DependencyRequirement requirement,
+        string workspaceRoot,
+        DotNetEnvironmentSnapshot environment)
+    {
+        var source = Path.Combine(workspaceRoot, ".config", "dotnet-tools.json");
+        return environment.ToolManifestStatus switch
+        {
+            EnvironmentDetectionStatus.Available => new DependencyCapability(
+                requirement,
+                EnvironmentDetectionStatus.Available,
+                null,
+                source,
+                null),
+            EnvironmentDetectionStatus.Missing => Missing(requirement, source, "工作區沒有本機工具資訊清單。"),
+            _ => Failed(requirement, source, "無法偵測本機工具資訊清單。")
+        };
     }
 
     private static DependencyCapability DetectPackage(

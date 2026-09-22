@@ -39,6 +39,7 @@ public enum DependencyKind
     DotNetSdk,
     Workload,
     LocalTool,
+    ToolManifest,
     NuGetPackage
 }
 

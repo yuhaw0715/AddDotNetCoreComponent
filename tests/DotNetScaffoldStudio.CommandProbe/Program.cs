@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace DotNetScaffoldStudio.CommandProbe;
 
@@ -23,6 +24,18 @@ public static class Program
         {
             Console.Out.WriteLine($"stdout={secret}");
             Console.Error.WriteLine($"stderr={secret}");
+            return 0;
+        }
+
+        if (args is ["new", "tool-manifest"])
+        {
+            await CreateToolManifestAsync();
+            return 0;
+        }
+
+        if (args is ["tool", "install" or "update", var packageId, "--local", "--version", var version])
+        {
+            await InstallLocalToolAsync(packageId, version);
             return 0;
         }
 
@@ -62,6 +75,66 @@ public static class Program
         }
 
         return 0;
+    }
+
+    private static async Task CreateToolManifestAsync()
+    {
+        var directory = Path.Combine(Environment.CurrentDirectory, ".config");
+        Directory.CreateDirectory(directory);
+        var manifestPath = Path.Combine(directory, "dotnet-tools.json");
+        if (!File.Exists(manifestPath))
+        {
+            await File.WriteAllTextAsync(
+                manifestPath,
+                "{\"version\":1,\"isRoot\":true,\"tools\":{}}");
+        }
+    }
+
+    private static async Task InstallLocalToolAsync(string packageId, string version)
+    {
+        var directory = Path.Combine(Environment.CurrentDirectory, ".config");
+        Directory.CreateDirectory(directory);
+        var manifestPath = Path.Combine(directory, "dotnet-tools.json");
+        var manifest = File.Exists(manifestPath)
+            ? JsonSerializer.Deserialize<Dictionary<string, object?>>(await File.ReadAllTextAsync(manifestPath))
+            : null;
+        var tools = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (manifest?.TryGetValue("tools", out var existingTools) == true &&
+            existingTools is JsonElement toolsElement &&
+            toolsElement.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in toolsElement.EnumerateObject())
+            {
+                tools[property.Name] = property.Value;
+            }
+        }
+
+        tools[packageId] = new
+        {
+            version,
+            commands = new[] { packageId }
+        };
+        await File.WriteAllTextAsync(
+            manifestPath,
+            JsonSerializer.Serialize(new
+            {
+                version = 1,
+                isRoot = true,
+                tools
+            }));
+
+        var executableDirectory = Path.Combine(directory, "dotnet-tools");
+        Directory.CreateDirectory(executableDirectory);
+        var executablePath = Path.Combine(executableDirectory, packageId);
+        await File.WriteAllTextAsync(executablePath, "#!/usr/bin/env fixture\n");
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(
+                executablePath,
+                UnixFileMode.UserRead |
+                UnixFileMode.UserWrite |
+                UnixFileMode.UserExecute);
+        }
     }
 
     private static async Task WaitForFileAsync(string path)

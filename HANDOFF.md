@@ -5,10 +5,10 @@
 - 日期：2026-09-22（Asia/Taipei）
 - 儲存庫：`https://github.com/yuhaw0715/AddDotNetCoreComponent.git`
 - 分支：`main`
-- 目前已推送基準：`main` 與 `origin/main` 同步於 commit `1de0b2d 完成相依性能力偵測`。
+- 目前已推送基準：`main` 與 `origin/main` 應於本次 5.6 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-- OpenSpec 進度：27/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-- 本次 5.5 實作與交接文件修改尚未 commit/push；後續 commit/push 仍須另取得使用者明確允許。
+- OpenSpec 進度：28/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+- 本次 5.6 已完成驗證，commit/push 依使用者要求在本次交付中執行；後續每個 task 仍須獨立完成驗證後再交付。
 
 ## 產品與目前可操作成果
 
@@ -38,6 +38,7 @@ OpenSpec 已勾選以下區段：
 - 5.3：以結構化 `dotnet new <template> --help` 探索自訂範本選項，支援完整、部分解析與安全降級模式；額外參數維持為結構化引數，不提供 shell 入口。
 - 5.4：以唯讀 `IDependencyDiscovery` 偵測本機 `dotnet-ef`、`dotnet-aspnet-codegenerator` 及目標 `.csproj`／`Directory.Packages.props` 的必要 NuGet 套件，區分可用、缺少、偵測失敗與主要版本不相容。
 - 5.5：以 `DependencyPlan` 與一次性確認 token 建立計畫—確認—執行—重驗證流程；每個步驟完成後重驗證，並保留拒絕、部分成功、重驗證失敗與 Git／檔案差異。
+- 5.6：以 `LocalToolInstallationService` 建立 `.config/dotnet-tools.json`，再以 `dotnet tool install/update --local` 安裝工作區本機工具；隔離整合測試驗證工具資訊清單、可執行 fixture、重驗證、環境變數與檔案差異。
 
 重要實作位置：
 
@@ -52,6 +53,7 @@ OpenSpec 已勾選以下區段：
 - 環境探索領域模型：`src/DotNetScaffoldStudio.Domain/EnvironmentModels.cs`
 - 相依性能力探索：`src/DotNetScaffoldStudio.Infrastructure/DependencyDiscoveryService.cs`、`src/DotNetScaffoldStudio.Domain/DependencyModels.cs`
 - 相依性計畫流程：`src/DotNetScaffoldStudio.Application/DependencyPlanWorkflow.cs`
+- 本機工具安裝計畫：`src/DotNetScaffoldStudio.Infrastructure/LocalToolInstallationService.cs`；隔離 fixture 與測試：`tests/DotNetScaffoldStudio.CommandProbe/Program.cs`、`tests/DotNetScaffoldStudio.IntegrationTests/LocalToolInstallationServiceTests.cs`
 - 工作區與邊界：`WorkspaceService.cs`、`WorkspacePathResolver.cs`
 - Git 與檔案差異：`GitStatusService.cs`、`FileSnapshotService.cs`、`ExecutionDifferenceAggregator.cs`
 - Avalonia Demo：`src/DotNetScaffoldStudio.App/MainWindow.axaml` 與 `MainWindowViewModel.cs`
@@ -61,7 +63,7 @@ OpenSpec 已勾選以下區段：
 1. `ProcessCommandRunner` 已完成且有整合測試，但尚未接到 Avalonia UI；UI 只執行模擬服務。
 2. `OfficialFeatureCatalog` 尚未取代 `DemoCatalog`，所以畫面只顯示少量代表功能。
 3. OpenSpec 3.4 已完成：正式工作流程會在修改命令前後擷取 Git/檔案狀態；取消後以不受取消 token 影響的掃描回報部分輸出。CommandProbe 整合測試驗證正常終止嘗試、必要時終止程序樹與差異摘要。
-4. OpenSpec 5.1–5.5 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；App 組合根已註冊服務，但 Avalonia UI 尚未呼叫它。5.6–5.8 尚未完成。
+4. OpenSpec 5.1–5.6 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6 的本機工具服務已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。5.7–5.8 尚未完成。
 5. schema 表單、正式命令工廠與端到端產生流程尚未完成，OpenSpec 6.1–6.7 全部未完成。
 6. UI 是操作流程 Demo；搜尋欄、完整狀態呈現、正式確認類型、歷程、設定與 Finder 動作仍待實作。現有 UI 測試主要驗證 ViewModel，不是完整 headless Avalonia smoke suite。
 7. XAML 仍有部分繁體中文硬編碼，OpenSpec 7.7 未完成。
@@ -70,18 +72,18 @@ OpenSpec 已勾選以下區段：
 
 ## 下一步建議順序
 
-接續 OpenSpec 5.6，再依序進入第 5 節：
+接續 OpenSpec 5.7，再依序進入第 5 節：
 
-1. 實作 5.6 的本機工具資訊清單建立與工具安裝流程。
-2. 再實作 5.7 的目標專案 NuGet 安裝與 restore 流程。
+1. 實作 5.7 的目標專案 NuGet 安裝與 restore 流程。
+2. 再實作 5.8 的 SDK/工作負載說明與獨立確認流程。
 3. 每完成一項即執行適用測試、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 最近一次完整驗證（2026-09-22）
 
-OpenSpec 5.5 完成後的驗證結果：
+OpenSpec 5.6 完成後的驗證結果：
 
 - Build：0 警告、0 錯誤。
-- Test：76 項通過（Integration 33、UI 2、Unit 41）。
+- Test：77 項通過（Integration 34、UI 2、Unit 41）；另有 5.6 本機工具安裝隔離整合測試單獨通過。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
@@ -134,11 +136,11 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 以 CLI 輸出確認最新進度，不要只相信 HANDOFF.md 內的進度數字。
 
-目前 `main` 與 `origin/main` 的同步基準是 commit `1de0b2d`「完成相依性能力偵測」。開始前仍須檢查 `git status` 並保留任何既有變更。
+目前 `main` 與 `origin/main` 應已同步於最新 task commit；開始前仍須檢查 `git log -1` 與 `git status`，並保留任何既有變更。
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 5.6：建立本機工具資訊清單與工具安裝流程。完成後只在對應驗證全部通過時勾選 5.6，不要提前開始 5.7。
+下一個實作目標是 OpenSpec 5.7：只針對已選 `.csproj` 建立 NuGet 套件安裝與 restore 流程。完成後只在對應驗證全部通過時勾選 5.7，不要提前開始 5.8。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 

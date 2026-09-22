@@ -55,6 +55,14 @@ public interface IDependencyPlanWorkflow
         CancellationToken cancellationToken);
 }
 
+public interface ILocalToolInstallationService
+{
+    Task<DependencyPlan> CreatePlanAsync(
+        string workspaceRoot,
+        IReadOnlyList<DependencyRequirement> toolRequirements,
+        CancellationToken cancellationToken);
+}
+
 public interface IDotNetTemplateDiscovery
 {
     Task<DotNetTemplateDiscoveryResult> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);
