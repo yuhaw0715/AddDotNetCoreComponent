@@ -196,6 +196,10 @@ public sealed class ParameterEditorViewModel : ObservableObject
             _ => null
         };
 
+    public bool GetBooleanValue(string parameterId) =>
+        Fields.FirstOrDefault(parameterField => parameterField.Definition.Id == parameterId) is BooleanParameterFieldViewModel boolean &&
+        boolean.IsChecked;
+
     private void HandleFieldChanged(ParameterFieldViewModel field)
     {
         _state.SetValue(field.Definition.Id, field.ToParameterValue());

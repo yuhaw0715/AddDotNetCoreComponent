@@ -39,6 +39,7 @@ public static class DemoCatalog
         new("dbcontext-scaffold", "efcore", "反向工程 DbContext", "dbcontext scaffold", "由既有資料庫產生 DbContext 與 Entity。", "Code gen", "dotnet-ef"),
         new("database-update", "efcore", "更新資料庫", "database update", "將 Migration 套用到指定資料庫。", "高風險", "dotnet-ef", FeatureRisk.DatabaseChange),
 
-        new("company-api", "custom", "Company API Starter", "company-api", "示意：公司內部安裝的自訂專案範本。", "自訂", "dotnet-new")
+        new("company-api", "custom", "Company API Starter", "company-api", "示意：公司內部安裝的自訂專案範本。", "自訂", "dotnet-new"),
+        new("tool-install", "custom", "安裝本機 EF Core 工具", "dotnet-ef", "示意：只在目前工作區建立或更新本機工具，不使用全域安裝。", "本機工具", "dotnet-tool", FeatureRisk.EnvironmentChange)
     ];
 }

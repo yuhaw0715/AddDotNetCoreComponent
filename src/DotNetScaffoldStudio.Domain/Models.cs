@@ -16,6 +16,14 @@ public enum FeatureAvailability
     UnsupportedPlatform
 }
 
+public enum ConfirmationKind
+{
+    General,
+    FileOverwrite,
+    ToolInstallation,
+    DatabaseUpdate
+}
+
 public sealed record NavigationItem(string Id, string Title, string Subtitle)
 {
     public string Glyph => Id switch

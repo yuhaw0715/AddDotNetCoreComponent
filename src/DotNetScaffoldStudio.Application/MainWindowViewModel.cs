@@ -126,6 +126,11 @@ public sealed class MainWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(AvailabilityMessage));
             OnPropertyChanged(nameof(CanExecuteSelectedFeature));
             OnPropertyChanged(nameof(IsDatabaseRisk));
+            OnPropertyChanged(nameof(CurrentConfirmationKind));
+            OnPropertyChanged(nameof(IsHighRiskConfirmation));
+            OnPropertyChanged(nameof(ConfirmationTitle));
+            OnPropertyChanged(nameof(ConfirmationMessage));
+            OnPropertyChanged(nameof(ConfirmationDetails));
             OnPropertyChanged(nameof(CommandPreviewText));
             RequestExecutionCommand.NotifyCanExecuteChanged();
         }
@@ -241,6 +246,38 @@ public sealed class MainWindowViewModel : ObservableObject
         set => SetProperty(ref _isConfirmationVisible, value);
     }
 
+    public ConfirmationKind CurrentConfirmationKind => SelectedFeature?.Id switch
+    {
+        "database-update" => ConfirmationKind.DatabaseUpdate,
+        "tool-install" => ConfirmationKind.ToolInstallation,
+        _ when CurrentFeatureRisk == FeatureRisk.FileOverwrite => ConfirmationKind.FileOverwrite,
+        _ => ConfirmationKind.General
+    };
+
+    public bool IsHighRiskConfirmation => CurrentConfirmationKind != ConfirmationKind.General;
+    public bool IsDatabaseRisk => CurrentConfirmationKind == ConfirmationKind.DatabaseUpdate;
+    public string ConfirmationTitle => CurrentConfirmationKind switch
+    {
+        ConfirmationKind.FileOverwrite => "確認覆寫既有檔案",
+        ConfirmationKind.ToolInstallation => "確認安裝工作區本機工具",
+        ConfirmationKind.DatabaseUpdate => "確認更新資料庫",
+        _ => "確認示意執行"
+    };
+    public string ConfirmationMessage => CurrentConfirmationKind switch
+    {
+        ConfirmationKind.FileOverwrite => "此操作可能覆寫目前工作區內的檔案，請確認輸出位置與命令。",
+        ConfirmationKind.ToolInstallation => "此操作只會使用目前工作區的本機工具資訊清單，不會執行全域工具安裝。",
+        ConfirmationKind.DatabaseUpdate => "此操作會變更目標資料庫；請確認目標專案、DbContext 與連線資訊來源。",
+        _ => "請再次確認目標與命令。Demo 不會執行外部 CLI，也不會修改檔案。"
+    };
+    public string ConfirmationDetails => CurrentConfirmationKind switch
+    {
+        ConfirmationKind.FileOverwrite => "風險：既有檔案可能被覆寫；覆寫選項必須由使用者明確啟用。",
+        ConfirmationKind.ToolInstallation => "範圍：工作區 .config/dotnet-tools.json；禁止 --global。",
+        ConfirmationKind.DatabaseUpdate => $"目標專案：{SelectedProject?.Path ?? "尚未選擇"}\nDbContext：{ParameterEditor?.GetTextValue("dbContext") ?? "依專案設定"}\n連線來源：具名連線或專案設定（不顯示機密值）",
+        _ => "安全 Demo 模式：不會啟動外部 CLI，也不會修改檔案或資料庫。"
+    };
+
     public bool IsNavigationCollapsed
     {
         get => _isNavigationCollapsed;
@@ -323,7 +360,6 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool RequiresProjectSelection => IsMultipleProjects && SelectedProject is null;
     public bool RequiresTargetProject => SelectedFeature?.Category is "scaffolding" or "efcore";
     public bool HasVisibleFeatures => VisibleFeatures.Count > 0;
-    public bool IsDatabaseRisk => SelectedFeature?.Risk == FeatureRisk.DatabaseChange;
     public bool CanExecuteSelectedFeature =>
         SelectedFeature?.Availability == FeatureAvailability.Available &&
         (!RequiresTargetProject || SelectedProject is not null);
@@ -417,7 +453,7 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         HasResult = false;
         IsConfirmationVisible = true;
-        StatusMessage = IsDatabaseRisk
+        StatusMessage = IsHighRiskConfirmation
             ? "等待高風險操作二次確認"
             : "請確認命令與目標位置";
     }
@@ -526,6 +562,13 @@ public sealed class MainWindowViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(ValidationMessage));
+        OnPropertyChanged(nameof(CommandPreviewText));
+        OnPropertyChanged(nameof(IsDatabaseRisk));
+        OnPropertyChanged(nameof(CurrentConfirmationKind));
+        OnPropertyChanged(nameof(IsHighRiskConfirmation));
+        OnPropertyChanged(nameof(ConfirmationTitle));
+        OnPropertyChanged(nameof(ConfirmationMessage));
+        OnPropertyChanged(nameof(ConfirmationDetails));
         RequestExecutionCommand.NotifyCanExecuteChanged();
     }
 
@@ -632,6 +675,9 @@ public sealed class MainWindowViewModel : ObservableObject
             case "dbcontext-scaffold":
                 arguments = ["ef", "dbcontext", "scaffold", "Name=ConnectionStrings:Commerce", "Microsoft.EntityFrameworkCore.Sqlite", "--project", projectPath, "--output-dir", "Models"];
                 break;
+            case "tool-install":
+                arguments = ["tool", "install", "dotnet-ef", "--local"];
+                break;
             case "blazor-crud":
                 arguments = ["aspnet-codegenerator", "blazor", "CRUD", "--model", "Order", "--dataContext", "CommerceDbContext", "--project", projectPath, "--relativeFolderPath", "Components/Pages/Orders"];
                 break;
@@ -640,6 +686,16 @@ public sealed class MainWindowViewModel : ObservableObject
                 break;
         }
 
-        return new CommandPreview("dotnet", arguments, workingDirectory, SelectedFeature.Risk);
+        if (ParameterEditor?.GetBooleanValue("force") == true && !arguments.Contains("--force", StringComparer.Ordinal))
+        {
+            arguments.Add("--force");
+        }
+
+        return new CommandPreview("dotnet", arguments, workingDirectory, CurrentFeatureRisk);
     }
+
+    private FeatureRisk CurrentFeatureRisk =>
+        SelectedFeature?.Risk == FeatureRisk.Normal && ParameterEditor?.GetBooleanValue("force") == true
+            ? FeatureRisk.FileOverwrite
+            : SelectedFeature?.Risk ?? FeatureRisk.Normal;
 }

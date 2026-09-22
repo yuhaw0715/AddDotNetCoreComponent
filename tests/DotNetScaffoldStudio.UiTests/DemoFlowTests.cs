@@ -168,6 +168,49 @@ public sealed class DemoFlowTests
     }
 
     [Fact]
+    public void Confirmation_UsesSpecificDialogForOverwriteAndCancelDoesNotExecute()
+    {
+        var execution = new FakeExecutionService();
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), execution);
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "project");
+        viewModel.SelectedFeature = viewModel.VisibleFeatures.Single(feature => feature.Id == "webapi");
+        var editor = viewModel.ParameterEditor!;
+        editor.ShowAdvanced = true;
+        var force = Assert.IsType<BooleanParameterFieldViewModel>(editor.Fields.Single(field => field.Definition.Id == "force"));
+        force.IsChecked = true;
+
+        Assert.Equal(ConfirmationKind.FileOverwrite, viewModel.CurrentConfirmationKind);
+        viewModel.RequestExecutionCommand.Execute(null);
+        Assert.Equal("確認覆寫既有檔案", viewModel.ConfirmationTitle);
+        Assert.True(viewModel.IsConfirmationVisible);
+
+        viewModel.CancelConfirmationCommand.Execute(null);
+
+        Assert.False(viewModel.IsConfirmationVisible);
+        Assert.Equal(0, execution.CallCount);
+    }
+
+    [Fact]
+    public void Confirmation_DistinguishesToolInstallationAndDatabaseUpdate()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "custom");
+        viewModel.SelectedFeature = viewModel.VisibleFeatures.Single(feature => feature.Id == "tool-install");
+        Assert.Equal(ConfirmationKind.ToolInstallation, viewModel.CurrentConfirmationKind);
+        Assert.Contains("dotnet-tools.json", viewModel.ConfirmationDetails, StringComparison.Ordinal);
+
+        viewModel.UseDemoWorkspaceCommand.Execute(null);
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "efcore");
+        viewModel.SelectedFeature = viewModel.VisibleFeatures.Single(feature => feature.Id == "database-update");
+
+        Assert.Equal(ConfirmationKind.DatabaseUpdate, viewModel.CurrentConfirmationKind);
+        Assert.Contains("連線來源", viewModel.ConfirmationDetails, StringComparison.Ordinal);
+        Assert.DoesNotContain("Password", viewModel.ConfirmationDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task WorkspaceScan_EmptyWorkspaceKeepsTemplateFlowAvailable()
     {
         var viewModel = new MainWindowViewModel(
@@ -283,10 +326,18 @@ public sealed class DemoFlowTests
 
     private sealed class FakeExecutionService : IDemoExecutionService
     {
+        public int CallCount { get; private set; }
+
         public Task<DemoExecutionResult> ExecuteAsync(
             CommandPreview command,
             IProgress<string> progress,
             CancellationToken cancellationToken) =>
-            Task.FromResult(new DemoExecutionResult(true, "示意產生成功", "完成", [], ["A Controllers/OrdersController.cs"]));
+            ExecuteCoreAsync();
+
+        private Task<DemoExecutionResult> ExecuteCoreAsync()
+        {
+            CallCount++;
+            return Task.FromResult(new DemoExecutionResult(true, "示意產生成功", "完成", [], ["A Controllers/OrdersController.cs"]));
+        }
     }
 }
