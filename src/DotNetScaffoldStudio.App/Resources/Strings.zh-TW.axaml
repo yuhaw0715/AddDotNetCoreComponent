@@ -30,4 +30,8 @@
   <x:String x:Key="NoMatchingFeatures">找不到符合搜尋條件的功能。</x:String>
   <x:String x:Key="ShowAdvancedOptions">顯示進階選項</x:String>
   <x:String x:Key="ParameterValuePlaceholder">請輸入參數值</x:String>
+  <x:String x:Key="ExecutionStage">目前階段</x:String>
+  <x:String x:Key="ExistingChanges">執行前既有變更</x:String>
+  <x:String x:Key="GeneratedChanges">執行後檔案差異</x:String>
+  <x:String x:Key="OpenInFinder">在 Finder 顯示輸出</x:String>
 </ResourceDictionary>

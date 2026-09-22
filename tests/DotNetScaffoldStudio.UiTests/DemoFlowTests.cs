@@ -165,6 +165,60 @@ public sealed class DemoFlowTests
         Assert.True(viewModel.HasResult);
         Assert.Equal("示意產生成功", viewModel.ResultTitle);
         Assert.Single(viewModel.ResultFiles);
+        Assert.Single(viewModel.ExistingChanges);
+        Assert.Equal(ExecutionStage.Succeeded, viewModel.ExecutionStage);
+        Assert.Contains("變更", viewModel.GitDifferenceSummary, StringComparison.Ordinal);
+        Assert.True(viewModel.CanOpenResultInFinder);
+    }
+
+    [Fact]
+    public async Task Execution_FailureShowsFailedStageAndPreservesDifferences()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService(false));
+
+        viewModel.RequestExecutionCommand.Execute(null);
+        await viewModel.ConfirmExecutionCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasResult);
+        Assert.Equal(ExecutionStage.Failed, viewModel.ExecutionStage);
+        Assert.Single(viewModel.ResultFiles);
+        Assert.Single(viewModel.ExistingChanges);
+    }
+
+    [Fact]
+    public async Task Execution_CancelShowsCancelledStageAndDoesNotAssumeNoChanges()
+    {
+        var execution = new BlockingExecutionService();
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), execution);
+
+        viewModel.RequestExecutionCommand.Execute(null);
+        var executionTask = viewModel.ConfirmExecutionCommand.ExecuteAsync(null);
+        await execution.Started.Task;
+
+        viewModel.CancelExecutionCommand.Execute(null);
+        await executionTask;
+
+        Assert.Equal(ExecutionStage.Cancelled, viewModel.ExecutionStage);
+        Assert.True(viewModel.HasResult);
+        Assert.Contains("重新掃描", viewModel.ResultSummary, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Execution_CanRevealOutputThroughInjectedFinderService()
+    {
+        var finder = new FakeFileRevealService();
+        var viewModel = new MainWindowViewModel(
+            new FakeWorkspaceService(),
+            new FakeExecutionService(),
+            new ParameterValidator(),
+            finder);
+
+        viewModel.RequestExecutionCommand.Execute(null);
+        await viewModel.ConfirmExecutionCommand.ExecuteAsync(null);
+        await viewModel.OpenResultInFinderCommand.ExecuteAsync(null);
+
+        Assert.NotNull(finder.RevealedPath);
+        Assert.Contains("Controllers", finder.RevealedPath, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -326,7 +380,10 @@ public sealed class DemoFlowTests
 
     private sealed class FakeExecutionService : IDemoExecutionService
     {
+        private readonly bool _succeeded;
         public int CallCount { get; private set; }
+
+        public FakeExecutionService(bool succeeded = true) => _succeeded = succeeded;
 
         public Task<DemoExecutionResult> ExecuteAsync(
             CommandPreview command,
@@ -337,7 +394,41 @@ public sealed class DemoFlowTests
         private Task<DemoExecutionResult> ExecuteCoreAsync()
         {
             CallCount++;
-            return Task.FromResult(new DemoExecutionResult(true, "示意產生成功", "完成", [], ["A Controllers/OrdersController.cs"]));
+            return Task.FromResult(new DemoExecutionResult(
+                _succeeded,
+                _succeeded ? "示意產生成功" : "示意產生失敗",
+                _succeeded ? "完成" : "CLI 回報失敗，保留實際差異。",
+                [],
+                ["A Controllers/OrdersController.cs"],
+                ["M  Program.cs"],
+                "demo/main",
+                "執行前已有 1 項變更；執行後新增 1 項差異。"));
+        }
+    }
+
+    private sealed class BlockingExecutionService : IDemoExecutionService
+    {
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async Task<DemoExecutionResult> ExecuteAsync(
+            CommandPreview command,
+            IProgress<string> progress,
+            CancellationToken cancellationToken)
+        {
+            Started.SetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            return new DemoExecutionResult(true, "不會到達", string.Empty, [], []);
+        }
+    }
+
+    private sealed class FakeFileRevealService : IFileRevealService
+    {
+        public string? RevealedPath { get; private set; }
+
+        public Task<FileRevealResult> RevealAsync(string path, CancellationToken cancellationToken)
+        {
+            RevealedPath = path;
+            return Task.FromResult(new FileRevealResult(true, "已顯示"));
         }
     }
 }

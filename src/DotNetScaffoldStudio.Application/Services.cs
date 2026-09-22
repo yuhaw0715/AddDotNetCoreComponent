@@ -2,6 +2,12 @@ using DotNetScaffoldStudio.Domain;
 
 namespace DotNetScaffoldStudio.Application;
 
+public sealed class DemoFileRevealService : IFileRevealService
+{
+    public Task<FileRevealResult> RevealAsync(string path, CancellationToken cancellationToken) =>
+        Task.FromResult(new FileRevealResult(true, $"Demo 已準備在 Finder 顯示：{path}"));
+}
+
 public interface IWorkspaceService
 {
     Task<IReadOnlyList<ProjectInfo>> ScanProjectsAsync(string path, CancellationToken cancellationToken);
@@ -13,6 +19,11 @@ public interface IDemoExecutionService
         CommandPreview command,
         IProgress<string> progress,
         CancellationToken cancellationToken);
+}
+
+public interface IFileRevealService
+{
+    Task<FileRevealResult> RevealAsync(string path, CancellationToken cancellationToken);
 }
 
 public interface ICommandRunner

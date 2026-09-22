@@ -257,9 +257,10 @@
             <Border Grid.Row="1" IsVisible="{Binding IsRunning}" Margin="0,16,0,0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="15">
               <StackPanel Spacing="10">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="正在執行示意流程…" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding ExecutionStageLabel}" FontWeight="SemiBold" />
                   <Button Grid.Column="1" Content="取消" Command="{Binding CancelExecutionCommand}" />
                 </Grid>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
                 <ProgressBar IsIndeterminate="True" Height="5" />
                 <TextBox Text="{Binding ExecutionOutput}" IsReadOnly="True" AcceptsReturn="True" MinHeight="100" FontFamily="Menlo" FontSize="11" />
               </StackPanel>
@@ -268,7 +269,21 @@
             <Border Grid.Row="2" IsVisible="{Binding HasResult}" Margin="0,16,0,0" Background="#ECFDF3" BorderBrush="#ABEFC6" BorderThickness="1" CornerRadius="10" Padding="16">
               <StackPanel Spacing="8">
                 <TextBlock Text="{Binding ResultTitle}" Foreground="#027A48" FontSize="16" FontWeight="Bold" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="{DynamicResource ExecutionStage}" Foreground="#05603A" FontSize="11" />
+                  <TextBlock Text="{Binding ExecutionStageLabel}" Foreground="#05603A" FontSize="11" FontWeight="SemiBold" />
+                </StackPanel>
                 <TextBlock Text="{Binding ResultSummary}" Foreground="#05603A" TextWrapping="Wrap" FontSize="12" />
+                <TextBlock Text="{Binding GitDifferenceSummary}" Foreground="#05603A" TextWrapping="Wrap" FontSize="11" />
+                <TextBlock Text="{DynamicResource ExistingChanges}" FontWeight="SemiBold" Foreground="#05603A" Margin="0,6,0,0" />
+                <ItemsControl ItemsSource="{Binding ExistingChanges}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:CompileBindings="False">
+                      <TextBlock Text="{Binding}" Foreground="#05603A" FontFamily="Menlo" FontSize="11" Margin="0,2" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{DynamicResource GeneratedChanges}" FontWeight="SemiBold" Foreground="#05603A" Margin="0,6,0,0" />
                 <ItemsControl ItemsSource="{Binding ResultFiles}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:CompileBindings="False">
@@ -276,6 +291,7 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <Button Classes="secondary" Content="{DynamicResource OpenInFinder}" Command="{Binding OpenResultInFinderCommand}" IsEnabled="{Binding CanOpenResultInFinder}" />
               </StackPanel>
             </Border>
           </Grid>

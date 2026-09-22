@@ -24,6 +24,16 @@ public enum ConfirmationKind
     DatabaseUpdate
 }
 
+public enum ExecutionStage
+{
+    Idle,
+    AwaitingConfirmation,
+    Executing,
+    Succeeded,
+    Failed,
+    Cancelled
+}
+
 public sealed record NavigationItem(string Id, string Title, string Subtitle)
 {
     public string Glyph => Id switch
@@ -124,4 +134,9 @@ public sealed record DemoExecutionResult(
     string Title,
     string Summary,
     IReadOnlyList<string> Output,
-    IReadOnlyList<string> FileChanges);
+    IReadOnlyList<string> FileChanges,
+    IReadOnlyList<string>? ExistingChanges = null,
+    string? GitBranch = null,
+    string? GitStatus = null);
+
+public sealed record FileRevealResult(bool Succeeded, string Message);

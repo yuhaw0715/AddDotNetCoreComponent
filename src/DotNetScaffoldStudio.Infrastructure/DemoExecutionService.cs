@@ -34,7 +34,10 @@ public sealed class DemoExecutionService : IDemoExecutionService
             "示意產生成功",
             "這是流程 Demo；沒有執行外部 CLI，也沒有修改工作區。正式版本將在此顯示真實結束碼、耗時與差異。",
             steps,
-            [$"A  {generatedFolder}/{generatedName}.cs", "M  Program.cs"]);
+            [$"A  {generatedFolder}/{generatedName}.cs"],
+            ["M  Program.cs"],
+            "demo/main",
+            "工作樹包含 1 個執行前既有變更；Demo 不會修改工作區。");
     }
 
     private static string? GetArgumentValue(IReadOnlyList<string> arguments, string option)

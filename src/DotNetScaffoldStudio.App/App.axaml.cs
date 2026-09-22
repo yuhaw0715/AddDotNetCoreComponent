@@ -18,6 +18,7 @@ public sealed partial class App : Avalonia.Application
         var services = new ServiceCollection();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
         services.AddSingleton<IDemoExecutionService, DemoExecutionService>();
+        services.AddSingleton<IFileRevealService, FinderRevealService>();
         services.AddSingleton<ICommandRunner, ProcessCommandRunner>();
         services.AddSingleton<CommandCoordinator>();
         services.AddSingleton<IGitStatusService>(provider =>

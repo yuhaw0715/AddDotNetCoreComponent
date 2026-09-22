@@ -10,6 +10,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly IWorkspaceService _workspaceService;
     private readonly IDemoExecutionService _executionService;
     private readonly ParameterValidator _parameterValidator;
+    private readonly IFileRevealService _fileRevealService;
     private CancellationTokenSource? _executionCancellation;
     private NavigationItem? _selectedNavigation;
     private FeatureDefinition? _selectedFeature;
@@ -26,13 +27,15 @@ public sealed class MainWindowViewModel : ObservableObject
     private bool _isConfirmationVisible;
     private bool _isRunning;
     private bool _hasResult;
+    private ExecutionStage _executionStage;
     private string _statusMessage = "Demo 模式 · 不會修改任何檔案";
     private string _executionOutput = "尚未執行命令。";
     private string _resultTitle = string.Empty;
     private string _resultSummary = string.Empty;
+    private string _gitDifferenceSummary = string.Empty;
 
     public MainWindowViewModel(IWorkspaceService workspaceService, IDemoExecutionService executionService)
-        : this(workspaceService, executionService, new ParameterValidator())
+        : this(workspaceService, executionService, new ParameterValidator(), new DemoFileRevealService())
     {
     }
 
@@ -40,10 +43,20 @@ public sealed class MainWindowViewModel : ObservableObject
         IWorkspaceService workspaceService,
         IDemoExecutionService executionService,
         ParameterValidator parameterValidator)
+        : this(workspaceService, executionService, parameterValidator, new DemoFileRevealService())
+    {
+    }
+
+    public MainWindowViewModel(
+        IWorkspaceService workspaceService,
+        IDemoExecutionService executionService,
+        ParameterValidator parameterValidator,
+        IFileRevealService fileRevealService)
     {
         _workspaceService = workspaceService;
         _executionService = executionService;
         _parameterValidator = parameterValidator;
+        _fileRevealService = fileRevealService;
 
         ScanWorkspaceCommand = new AsyncRelayCommand(ScanWorkspaceAsync, CanScanWorkspace);
         UseDemoWorkspaceCommand = new RelayCommand(UseDemoWorkspace);
@@ -53,6 +66,7 @@ public sealed class MainWindowViewModel : ObservableObject
         CancelExecutionCommand = new RelayCommand(CancelExecution, () => IsRunning);
         ClearResultCommand = new RelayCommand(ClearResult);
         ToggleNavigationCommand = new RelayCommand(ToggleNavigation);
+        OpenResultInFinderCommand = new AsyncRelayCommand(OpenResultInFinderAsync, CanOpenResultInFinderCommand);
 
         foreach (var item in DemoCatalog.Navigation)
         {
@@ -67,6 +81,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<FeatureDefinition> VisibleFeatures { get; } = [];
     public ObservableCollection<ProjectInfo> Projects { get; } = [];
     public ObservableCollection<string> ResultFiles { get; } = [];
+    public ObservableCollection<string> ExistingChanges { get; } = [];
     public IReadOnlyList<string> TemplateModes { get; } = ["空白", "含讀寫動作", "MVC CRUD", "REST API"];
 
     public IAsyncRelayCommand ScanWorkspaceCommand { get; }
@@ -77,6 +92,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public IRelayCommand CancelExecutionCommand { get; }
     public IRelayCommand ClearResultCommand { get; }
     public IRelayCommand ToggleNavigationCommand { get; }
+    public IAsyncRelayCommand OpenResultInFinderCommand { get; }
     public ParameterEditorViewModel? ParameterEditor { get; private set; }
 
     public NavigationItem? SelectedNavigation
@@ -322,8 +338,36 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool HasResult
     {
         get => _hasResult;
-        private set => SetProperty(ref _hasResult, value);
+        private set
+        {
+            if (SetProperty(ref _hasResult, value))
+            {
+                OpenResultInFinderCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
+
+    public ExecutionStage ExecutionStage
+    {
+        get => _executionStage;
+        private set
+        {
+            if (SetProperty(ref _executionStage, value))
+            {
+                OnPropertyChanged(nameof(ExecutionStageLabel));
+            }
+        }
+    }
+
+    public string ExecutionStageLabel => ExecutionStage switch
+    {
+        ExecutionStage.AwaitingConfirmation => "等待確認",
+        ExecutionStage.Executing => "執行中",
+        ExecutionStage.Succeeded => "成功",
+        ExecutionStage.Failed => "失敗",
+        ExecutionStage.Cancelled => "已取消",
+        _ => "閒置"
+    };
 
     public string StatusMessage
     {
@@ -348,6 +392,14 @@ public sealed class MainWindowViewModel : ObservableObject
         get => _resultSummary;
         private set => SetProperty(ref _resultSummary, value);
     }
+
+    public string GitDifferenceSummary
+    {
+        get => _gitDifferenceSummary;
+        private set => SetProperty(ref _gitDifferenceSummary, value);
+    }
+
+    public bool CanOpenResultInFinder => HasResult && ResultFiles.Count > 0;
 
     public bool IsFeatureGroup => SelectedNavigation?.Id is "project" or "component" or "scaffolding" or "efcore" or "custom";
     public bool IsContentPage => !IsFeatureGroup;
@@ -452,6 +504,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private void RequestExecution()
     {
         HasResult = false;
+        ExecutionStage = ExecutionStage.AwaitingConfirmation;
         IsConfirmationVisible = true;
         StatusMessage = IsHighRiskConfirmation
             ? "等待高風險操作二次確認"
@@ -468,6 +521,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
         IsConfirmationVisible = false;
         IsRunning = true;
+        ExecutionStage = ExecutionStage.Executing;
         HasResult = false;
         ExecutionOutput = string.Empty;
         StatusMessage = "Demo 執行中…";
@@ -485,7 +539,17 @@ public sealed class MainWindowViewModel : ObservableObject
                 ResultFiles.Add(file);
             }
 
+            ExistingChanges.Clear();
+            foreach (var change in result.ExistingChanges ?? [])
+            {
+                ExistingChanges.Add(change);
+            }
+
+            GitDifferenceSummary = result.GitStatus ??
+                $"Git 分支：{result.GitBranch ?? "非 Git 工作區"}；執行後新增 {ResultFiles.Count} 項差異，執行前既有 {ExistingChanges.Count} 項變更。";
+
             HasResult = true;
+            ExecutionStage = result.Succeeded ? ExecutionStage.Succeeded : ExecutionStage.Failed;
             StatusMessage = result.Succeeded ? "示意流程已完成" : "示意流程失敗";
         }
         catch (OperationCanceledException)
@@ -493,7 +557,10 @@ public sealed class MainWindowViewModel : ObservableObject
             ResultTitle = "已取消示意執行";
             ResultSummary = "正式版本會在取消後重新掃描檔案差異，不會假設工作區未被修改。";
             ResultFiles.Clear();
+            ExistingChanges.Clear();
+            GitDifferenceSummary = "取消後已重新掃描差異；Demo 未修改工作區。";
             HasResult = true;
+            ExecutionStage = ExecutionStage.Cancelled;
             StatusMessage = "已取消";
         }
         finally
@@ -635,9 +702,23 @@ public sealed class MainWindowViewModel : ObservableObject
     private void ClearResult()
     {
         HasResult = false;
+        ExecutionStage = ExecutionStage.Idle;
         ExecutionOutput = "尚未執行命令。";
         ResultFiles.Clear();
+        ExistingChanges.Clear();
+        GitDifferenceSummary = string.Empty;
         StatusMessage = "Demo 模式 · 不會修改任何檔案";
+    }
+
+    private bool CanOpenResultInFinderCommand() => CanOpenResultInFinder;
+
+    private async Task OpenResultInFinderAsync()
+    {
+        var directory = WorkspacePath == "尚未選擇工作區"
+            ? OutputPath
+            : Path.Combine(WorkspacePath, OutputPath);
+        var result = await _fileRevealService.RevealAsync(directory, CancellationToken.None);
+        StatusMessage = result.Message;
     }
 
     private CommandPreview? BuildCommandPreview()
