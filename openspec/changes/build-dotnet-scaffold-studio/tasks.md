@@ -37,7 +37,7 @@
 - [x] 5.1 實作 `dotnet --info`、SDK/Runtime、工作負載與工具清單偵測，並以缺少 SDK、只有 Runtime、多 SDK 及命令失敗 fixture 驗證狀態。
 - [x] 5.2 實作固定 CLI UI 語言的 `dotnet new list` 探索與解析，並以多版本/不同欄寬輸出 fixture 驗證官方與自訂範本辨識。
 - [x] 5.3 實作自訂範本 `--help` 解析及安全降級模式，並以可解析、部分解析與無法解析 fixture 驗證不會產生 shell 命令入口。
-- [ ] 5.4 實作 `dotnet-ef`、`dotnet-aspnet-codegenerator` 與目標專案必要 NuGet 套件的版本/能力偵測，並以相容與主要版本衝突案例測試。
+- [x] 5.4 實作 `dotnet-ef`、`dotnet-aspnet-codegenerator` 與目標專案必要 NuGet 套件的版本/能力偵測，並以相容與主要版本衝突案例測試。
 - [ ] 5.5 建立 `DependencyPlan` 及計畫—確認—執行—重驗證流程，並以拒絕確認、部分成功與重驗證失敗案例測試狀態與檔案差異。
 - [ ] 5.6 實作建立工具資訊清單及專案本機工具安裝，不使用全域安裝，並在隔離整合測試中驗證 `.config/dotnet-tools.json` 與工具可執行。
 - [ ] 5.7 實作只針對已選 `.csproj` 的 NuGet 套件安裝/restore，並以暫存專案驗證套件版本、錯誤階段與失敗時不自動回復。

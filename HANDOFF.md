@@ -5,10 +5,10 @@
 - 日期：2026-09-22（Asia/Taipei）
 - 儲存庫：`https://github.com/yuhaw0715/AddDotNetCoreComponent.git`
 - 分支：`main`
-- 目前已推送基準：`main` 與 `origin/main` 同步於 commit `3636684 完成取消流程與 .NET 環境探索`。
+- 目前已推送基準：`main` 與 `origin/main` 同步於 commit `a4ac1f7 完成範本探索與安全解析`。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-- OpenSpec 進度：25/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-- 目前工作樹在本次編輯前為 clean；本次 `HANDOFF.md` 修改尚未 commit/push。後續 commit/push 仍須另取得使用者明確允許。
+- OpenSpec 進度：26/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+- 本次 5.4 實作與交接文件修改尚未 commit/push；後續 commit/push 仍須另取得使用者明確允許。
 
 ## 產品與目前可操作成果
 
@@ -36,6 +36,7 @@ OpenSpec 已勾選以下區段：
 - 5.1：以結構化 `CommandRequest` 偵測 `dotnet --info`、SDK、Runtime、工作負載和工作區本機工具；含無 SDK、僅 Runtime、多 SDK 與命令失敗 fixture。
 - 5.2：以固定英文 CLI UI 語言探索並解析 `dotnet new list`，支援多版本/欄寬 fixture 與官方/自訂範本辨識。
 - 5.3：以結構化 `dotnet new <template> --help` 探索自訂範本選項，支援完整、部分解析與安全降級模式；額外參數維持為結構化引數，不提供 shell 入口。
+- 5.4：以唯讀 `IDependencyDiscovery` 偵測本機 `dotnet-ef`、`dotnet-aspnet-codegenerator` 及目標 `.csproj`／`Directory.Packages.props` 的必要 NuGet 套件，區分可用、缺少、偵測失敗與主要版本不相容。
 
 重要實作位置：
 
@@ -48,6 +49,7 @@ OpenSpec 已勾選以下區段：
 - 正式命令執行與取消後差異彙整：`src/DotNetScaffoldStudio.Application/CommandExecutionWorkflow.cs`
 - .NET SDK/Runtime/工作負載/本機工具探索：`src/DotNetScaffoldStudio.Infrastructure/DotNetEnvironmentDiscoveryService.cs`
 - 環境探索領域模型：`src/DotNetScaffoldStudio.Domain/EnvironmentModels.cs`
+- 相依性能力探索：`src/DotNetScaffoldStudio.Infrastructure/DependencyDiscoveryService.cs`、`src/DotNetScaffoldStudio.Domain/DependencyModels.cs`
 - 工作區與邊界：`WorkspaceService.cs`、`WorkspacePathResolver.cs`
 - Git 與檔案差異：`GitStatusService.cs`、`FileSnapshotService.cs`、`ExecutionDifferenceAggregator.cs`
 - Avalonia Demo：`src/DotNetScaffoldStudio.App/MainWindow.axaml` 與 `MainWindowViewModel.cs`
@@ -57,7 +59,7 @@ OpenSpec 已勾選以下區段：
 1. `ProcessCommandRunner` 已完成且有整合測試，但尚未接到 Avalonia UI；UI 只執行模擬服務。
 2. `OfficialFeatureCatalog` 尚未取代 `DemoCatalog`，所以畫面只顯示少量代表功能。
 3. OpenSpec 3.4 已完成：正式工作流程會在修改命令前後擷取 Git/檔案狀態；取消後以不受取消 token 影響的掃描回報部分輸出。CommandProbe 整合測試驗證正常終止嘗試、必要時終止程序樹與差異摘要。
-4. OpenSpec 5.1–5.3 已完成：環境與範本探索服務是唯讀流程，使用結構化 `CommandRequest`；App 組合根已註冊服務，但 Avalonia UI 尚未呼叫它。5.4–5.8 尚未完成。
+4. OpenSpec 5.1–5.4 已完成：環境、範本與相依性探索服務是唯讀流程，使用結構化 `CommandRequest` 或受限制的專案 XML 讀取；App 組合根已註冊服務，但 Avalonia UI 尚未呼叫它。5.5–5.8 尚未完成。
 5. schema 表單、正式命令工廠與端到端產生流程尚未完成，OpenSpec 6.1–6.7 全部未完成。
 6. UI 是操作流程 Demo；搜尋欄、完整狀態呈現、正式確認類型、歷程、設定與 Finder 動作仍待實作。現有 UI 測試主要驗證 ViewModel，不是完整 headless Avalonia smoke suite。
 7. XAML 仍有部分繁體中文硬編碼，OpenSpec 7.7 未完成。
@@ -66,18 +68,18 @@ OpenSpec 已勾選以下區段：
 
 ## 下一步建議順序
 
-接續 OpenSpec 5.4，再依序進入第 5 節：
+接續 OpenSpec 5.5，再依序進入第 5 節：
 
-1. 實作 5.4 的 `dotnet-ef`、`dotnet-aspnet-codegenerator` 與目標專案必要 NuGet 套件能力/版本偵測。
-2. 再實作 5.5 的相依性計畫—確認—執行—重驗證流程。
+1. 實作 5.5 的相依性計畫—確認—執行—重驗證流程。
+2. 再實作 5.6 的本機工具資訊清單建立與工具安裝流程。
 3. 每完成一項即執行適用測試、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 最近一次完整驗證（2026-09-22）
 
-OpenSpec 5.3 完成後的驗證結果：
+OpenSpec 5.4 完成後的驗證結果：
 
 - Build：0 警告、0 錯誤。
-- Test：68 項通過（Integration 29、UI 2、Unit 37）。
+- Test：72 項通過（Integration 33、UI 2、Unit 37）。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
@@ -130,11 +132,11 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 以 CLI 輸出確認最新進度，不要只相信 HANDOFF.md 內的進度數字。
 
-目前 `main` 與 `origin/main` 的同步基準是 commit `3636684`「完成取消流程與 .NET 環境探索」。開始前仍須檢查 `git status` 並保留任何既有變更。
+目前 `main` 與 `origin/main` 的同步基準是 commit `a4ac1f7`「完成範本探索與安全解析」。開始前仍須檢查 `git status` 並保留任何既有變更。
 
-已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描，以及唯讀的 .NET SDK、Runtime、工作負載與工作區本機工具探索服務。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
+已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描，以及唯讀的 .NET SDK、Runtime、工作負載、工作區本機工具與相依性能力探索服務。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 5.4：偵測 `dotnet-ef`、`dotnet-aspnet-codegenerator` 與目標專案必要 NuGet 套件的版本/能力，並以相容與主要版本衝突案例驗證。完成後只在對應驗證全部通過時勾選 5.4，不要提前開始 5.5。
+下一個實作目標是 OpenSpec 5.5：建立相依性計畫—確認—執行—重驗證流程。完成後只在對應驗證全部通過時勾選 5.5，不要提前開始 5.6。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 

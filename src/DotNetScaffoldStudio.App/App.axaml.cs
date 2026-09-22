@@ -26,6 +26,8 @@ public sealed partial class App : Avalonia.Application
         services.AddSingleton<ICommandExecutionWorkflow, CommandExecutionWorkflow>();
         services.AddSingleton<IDotNetEnvironmentDiscovery>(provider =>
             new DotNetEnvironmentDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
+        services.AddSingleton<IDependencyDiscovery>(provider =>
+            new DependencyDiscoveryService(provider.GetRequiredService<IDotNetEnvironmentDiscovery>()));
         services.AddSingleton<IDotNetTemplateDiscovery>(provider =>
             new DotNetTemplateDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<ICustomTemplateHelpDiscovery>(provider =>

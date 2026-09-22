@@ -37,6 +37,15 @@ public interface IDotNetEnvironmentDiscovery
     Task<DotNetEnvironmentSnapshot> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);
 }
 
+public interface IDependencyDiscovery
+{
+    Task<DependencyDiscoveryResult> DiscoverAsync(
+        string workspaceRoot,
+        string? targetProjectPath,
+        IReadOnlyList<DependencyRequirement> requirements,
+        CancellationToken cancellationToken);
+}
+
 public interface IDotNetTemplateDiscovery
 {
     Task<DotNetTemplateDiscoveryResult> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);

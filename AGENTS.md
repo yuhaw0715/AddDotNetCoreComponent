@@ -12,7 +12,8 @@
 - OpenSpec 3.4 已完成：正式命令工作流程會在執行前後擷取 Git/檔案狀態；取消時嘗試正常終止程序，必要時終止程序樹，並在取消後重新掃描以回報部分輸出差異。
 - OpenSpec 5.1 已完成：`IDotNetEnvironmentDiscovery` 透過 `CommandRequest` 與 `ProcessCommandRunner` 探索 .NET SDK、Runtime、工作負載及工作區本機工具；這是唯讀服務，不安裝全域工具。
 - OpenSpec 5.2 已完成：`IDotNetTemplateDiscovery` 使用固定 `DOTNET_CLI_UI_LANGUAGE=en` 探索並解析 `dotnet new list`，以多版本、不同欄寬 fixture 驗證官方與自訂範本辨識。
-- OpenSpec 5.3 已完成：`ICustomTemplateHelpDiscovery` 以結構化 `dotnet new <template> --help` 解析自訂範本選項；無法可靠解析時使用 `SafeFallback`，並以受限制的結構化額外引數保留安全性。下一個待辦是 5.4，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 5.3 已完成：`ICustomTemplateHelpDiscovery` 以結構化 `dotnet new <template> --help` 解析自訂範本選項；無法可靠解析時使用 `SafeFallback`，並以受限制的結構化額外引數保留安全性。
+- OpenSpec 5.4 已完成：`IDependencyDiscovery` 重用唯讀環境探索結果，偵測本機 `dotnet-ef`、`dotnet-aspnet-codegenerator` 與目標 `.csproj`／中央套件版本，區分缺少、偵測失敗與主要版本不相容。下一個待辦是 5.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。
