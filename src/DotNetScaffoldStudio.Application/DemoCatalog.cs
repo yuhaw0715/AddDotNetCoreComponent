@@ -23,6 +23,7 @@ public static class DemoCatalog
         new("blazor", "project", "Blazor Web App", "blazor", "建立支援互動式元件的 Blazor 應用程式。", ".NET 10", "dotnet-new"),
         new("console", "project", "主控台應用程式", "console", "建立跨平台 .NET 主控台專案。", "C#", "dotnet-new"),
         new("wpf", "project", "WPF 應用程式", "wpf", "Windows 專用桌面專案。", "Windows only", "dotnet-new", Availability: FeatureAvailability.UnsupportedPlatform, AvailabilityReason: "WPF 不支援 macOS，因此只能瀏覽，無法在此平台執行。"),
+        new("winforms", "project", "Windows Forms 應用程式", "winforms", "Windows 專用 Windows Forms 專案。", "Windows only", "dotnet-new", Availability: FeatureAvailability.UnsupportedPlatform, AvailabilityReason: "Windows Forms 不支援 macOS，因此只能瀏覽，無法在此平台執行。"),
 
         new("apicontroller", "component", "API Controller", "apicontroller", "建立 API Controller，可選擇加入讀寫動作。", "常用", "dotnet-new"),
         new("mvccontroller", "component", "MVC Controller", "mvccontroller", "建立 MVC Controller。", "MVC", "dotnet-new"),

@@ -59,6 +59,40 @@ public sealed class DemoFlowTests
     }
 
     [Fact]
+    public void FeatureSearch_FiltersByNameAndShowsDependencyState()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "scaffolding");
+        viewModel.FeatureSearchText = "minimal";
+
+        var feature = Assert.Single(viewModel.VisibleFeatures);
+        Assert.Equal("minimalapi", feature.Id);
+        Assert.Contains("Scaffolding", feature.DependencySummary, StringComparison.Ordinal);
+        Assert.Equal("可用", feature.AvailabilityLabel);
+
+        viewModel.FeatureSearchText = "does-not-exist";
+
+        Assert.Empty(viewModel.VisibleFeatures);
+        Assert.False(viewModel.HasVisibleFeatures);
+        Assert.Null(viewModel.SelectedFeature);
+    }
+
+    [Fact]
+    public void FeatureCatalog_WindowsTemplatesRemainVisibleButUnavailableOnMacOS()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "project");
+
+        var windowsFeatures = viewModel.VisibleFeatures.Where(feature => feature.Id is "wpf" or "winforms").ToArray();
+
+        Assert.Equal(2, windowsFeatures.Length);
+        Assert.All(windowsFeatures, feature => Assert.False(feature.IsAvailable));
+        Assert.Contains("不支援 macOS", windowsFeatures[0].AvailabilityReason, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DemoExecution_RequiresConfirmationAndReturnsSimulatedChanges()
     {
         var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());

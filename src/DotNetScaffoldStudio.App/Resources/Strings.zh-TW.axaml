@@ -26,4 +26,6 @@
   <x:String x:Key="ShowConfirmationBeforeExecution">命令執行前顯示確認</x:String>
   <x:String x:Key="TargetProjectSelectionHint">工作區包含多個專案，請明確選擇產生目標。</x:String>
   <x:String x:Key="NoTargetProjectSelected">尚未選擇目標專案。</x:String>
+  <x:String x:Key="FeatureSearchPlaceholder">搜尋名稱、短名稱或相依性</x:String>
+  <x:String x:Key="NoMatchingFeatures">找不到符合搜尋條件的功能。</x:String>
 </ResourceDictionary>

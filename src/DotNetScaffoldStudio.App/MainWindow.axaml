@@ -115,41 +115,53 @@
       <Border Grid.Column="1" IsVisible="{Binding IsFeatureGroup}" Background="#F9FAFB" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="20">
         <Grid RowDefinitions="Auto,Auto,*">
           <StackPanel Spacing="4">
-            <TextBlock Text="{DynamicResource AvailableFeatures}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{DynamicResource AvailableFeatures}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+              <TextBlock Grid.Column="1" Text="{Binding FeatureCountSummary}" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center" />
+            </Grid>
             <TextBlock Text="依用途選擇要產生的項目" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
           </StackPanel>
 
-          <TextBox Grid.Row="1" Margin="0,16,0,12" PlaceholderText="搜尋功能（Demo 畫面）" />
+          <TextBox Grid.Row="1" Margin="0,16,0,12" Text="{Binding FeatureSearchText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{DynamicResource FeatureSearchPlaceholder}" />
 
-          <ListBox Grid.Row="2"
-                   ItemsSource="{Binding VisibleFeatures}"
-                   SelectedItem="{Binding SelectedFeature}"
-                   Background="Transparent"
-                   BorderThickness="0">
-            <ListBox.Styles>
-              <Style Selector="ListBoxItem">
-                <Setter Property="Padding" Value="0" />
-                <Setter Property="Margin" Value="0,0,0,10" />
-                <Setter Property="CornerRadius" Value="10" />
-              </Style>
-            </ListBox.Styles>
-            <ListBox.ItemTemplate>
-              <DataTemplate DataType="domain:FeatureDefinition">
-                <Border Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
-                  <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
-                    <StackPanel Spacing="4">
-                      <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextBrush}" />
-                      <TextBlock Text="{Binding Description}" Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <Border Grid.Column="1" Background="#F2F4F7" CornerRadius="12" Padding="8,4" VerticalAlignment="Top">
-                      <TextBlock Text="{Binding Badge}" Foreground="#475467" FontSize="10" FontWeight="SemiBold" />
-                    </Border>
-                    <TextBlock Grid.Row="1" Margin="0,9,0,0" Text="{Binding ShortName, StringFormat='CLI · {0}'}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
-                  </Grid>
-                </Border>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+          <Grid Grid.Row="2">
+            <ListBox ItemsSource="{Binding VisibleFeatures}"
+                     SelectedItem="{Binding SelectedFeature}"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                  <Setter Property="Padding" Value="0" />
+                  <Setter Property="Margin" Value="0,0,0,10" />
+                  <Setter Property="CornerRadius" Value="10" />
+                </Style>
+              </ListBox.Styles>
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="domain:FeatureDefinition">
+                  <Border Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="14">
+                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextBrush}" />
+                        <TextBlock Text="{Binding Description}" Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <Border Grid.Column="1" Background="#F2F4F7" CornerRadius="12" Padding="8,4" VerticalAlignment="Top">
+                        <TextBlock Text="{Binding Badge}" Foreground="#475467" FontSize="10" FontWeight="SemiBold" />
+                      </Border>
+                      <TextBlock Grid.Row="1" Margin="0,9,0,0" Text="{Binding ShortName, StringFormat='CLI · {0}'}" Foreground="#7F56D9" FontFamily="Menlo" FontSize="10" />
+                      <StackPanel Grid.Row="2" Margin="0,9,0,0" Spacing="3">
+                        <TextBlock Text="{Binding DependencySummary, StringFormat='相依性：{0}'}" Foreground="{DynamicResource MutedBrush}" FontSize="10" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                          <TextBlock Text="{Binding AvailabilityLabel}" Foreground="#027A48" FontSize="10" />
+                          <TextBlock Text="{Binding RiskLabel}" Foreground="#B54708" FontSize="10" />
+                        </StackPanel>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock IsVisible="{Binding HasVisibleFeatures, Converter={x:Static BoolConverters.Not}}" Text="{DynamicResource NoMatchingFeatures}" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18" />
+          </Grid>
         </Grid>
       </Border>
 

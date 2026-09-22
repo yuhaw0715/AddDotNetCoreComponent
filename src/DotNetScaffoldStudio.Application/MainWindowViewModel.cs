@@ -17,6 +17,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _componentName = "OrdersController";
     private string _outputPath = "Controllers";
     private string _selectedTemplateMode = "含讀寫動作";
+    private string _featureSearchText = string.Empty;
     private bool _useAsyncActions = true;
     private bool _includeApiActions;
     private bool _isNavigationCollapsed;
@@ -77,13 +78,7 @@ public sealed class MainWindowViewModel : ObservableObject
                 return;
             }
 
-            VisibleFeatures.Clear();
-            foreach (var feature in DemoCatalog.Features.Where(feature => feature.Category == value.Id))
-            {
-                VisibleFeatures.Add(feature);
-            }
-
-            SelectedFeature = VisibleFeatures.FirstOrDefault();
+            RefreshVisibleFeatures();
             OnPropertyChanged(nameof(IsFeatureGroup));
             OnPropertyChanged(nameof(IsWorkspacePage));
             OnPropertyChanged(nameof(IsHistoryPage));
@@ -188,6 +183,18 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _selectedTemplateMode, value))
             {
                 OnPropertyChanged(nameof(CommandPreviewText));
+            }
+        }
+    }
+
+    public string FeatureSearchText
+    {
+        get => _featureSearchText;
+        set
+        {
+            if (SetProperty(ref _featureSearchText, value))
+            {
+                RefreshVisibleFeatures();
             }
         }
     }
@@ -303,6 +310,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool IsMultipleProjects => Projects.Count > 1;
     public bool RequiresProjectSelection => IsMultipleProjects && SelectedProject is null;
     public bool RequiresTargetProject => SelectedFeature?.Category is "scaffolding" or "efcore";
+    public bool HasVisibleFeatures => VisibleFeatures.Count > 0;
     public bool IsDatabaseRisk => SelectedFeature?.Risk == FeatureRisk.DatabaseChange;
     public bool CanExecuteSelectedFeature =>
         SelectedFeature?.Availability == FeatureAvailability.Available &&
@@ -316,6 +324,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public string ValidationMessage => string.IsNullOrWhiteSpace(ComponentName) ? "名稱為必填欄位。" : string.Empty;
     public string CommandPreviewText => BuildCommandPreview()?.DisplayText ?? "選擇功能後將顯示命令預覽";
     public string WorkingDirectoryText => BuildCommandPreview()?.WorkingDirectory ?? WorkspacePath;
+    public string FeatureCountSummary => $"{VisibleFeatures.Count} 項功能";
 
     public async Task LoadWorkspaceAsync(string path)
     {
@@ -446,6 +455,29 @@ public sealed class MainWindowViewModel : ObservableObject
     private void CancelExecution() => _executionCancellation?.Cancel();
 
     private void ToggleNavigation() => IsNavigationCollapsed = !IsNavigationCollapsed;
+
+    private void RefreshVisibleFeatures()
+    {
+        var category = SelectedNavigation?.Id;
+        var search = FeatureSearchText.Trim();
+        var features = DemoCatalog.Features.Where(feature =>
+            feature.Category == category &&
+            (search.Length == 0 ||
+             feature.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+             feature.ShortName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+             feature.Description.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+             feature.DependencySummary.Contains(search, StringComparison.OrdinalIgnoreCase)));
+
+        VisibleFeatures.Clear();
+        foreach (var feature in features)
+        {
+            VisibleFeatures.Add(feature);
+        }
+
+        SelectedFeature = VisibleFeatures.FirstOrDefault();
+        OnPropertyChanged(nameof(HasVisibleFeatures));
+        OnPropertyChanged(nameof(FeatureCountSummary));
+    }
 
     private void ClearResult()
     {
