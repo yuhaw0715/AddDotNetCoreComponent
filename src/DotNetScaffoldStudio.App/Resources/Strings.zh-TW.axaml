@@ -12,4 +12,16 @@
   <x:String x:Key="RunDemo">執行示意</x:String>
   <x:String x:Key="Cancel">取消</x:String>
   <x:String x:Key="Confirm">確認並執行示意</x:String>
+  <x:String x:Key="ToggleNavigation">切換主要導覽</x:String>
+  <x:String x:Key="WorkspacePageHeading">工作區與目標專案</x:String>
+  <x:String x:Key="WorkspacePageDescription">檢視目前工作區、掃描到的專案與產生目標。</x:String>
+  <x:String x:Key="HistoryPageHeading">執行紀錄</x:String>
+  <x:String x:Key="HistoryPageDescription">正式流程會在這裡保存命令、階段狀態與檔案差異摘要。</x:String>
+  <x:String x:Key="SettingsPageHeading">設定</x:String>
+  <x:String x:Key="SettingsPageDescription">管理工具、介面語言與本機偏好。</x:String>
+  <x:String x:Key="NoProjectsInWorkspace">尚未掃描到 .csproj 專案。</x:String>
+  <x:String x:Key="NavigationCollapsedHint">導覽已收合；可使用上方按鈕展開。</x:String>
+  <x:String x:Key="NoExecutionHistory">目前尚無執行紀錄。</x:String>
+  <x:String x:Key="EnableSafeModePrompt">啟用安全模式提示</x:String>
+  <x:String x:Key="ShowConfirmationBeforeExecution">命令執行前顯示確認</x:String>
 </ResourceDictionary>

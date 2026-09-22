@@ -24,7 +24,8 @@
 - OpenSpec 6.4 已完成：`AspNetScaffoldingCommandFactory` 支援八種 generator，將模式、`-p` 目標專案、名稱、模型、DbContext、資料庫提供者、Identity 檔案與輸出位置建立為結構化引數，並在建立前驗證工作區邊界。下一個待辦是 6.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 6.5 已完成：`EfCoreCommandFactory` 支援目錄內 12 個 EF Core 命令，將位置引數、專案、DbContext、連線與輸出轉為結構化引數；`database update` 產生不含原始連線值的二次確認資料，並明確拒絕 `database drop`。下一個待辦是 6.6，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 6.6 已完成：命令工廠列出預期輸出，`ExpectedOutputConflictChecker` 在既有 Controller 或輸出目錄時預設阻擋；明確 `force` 會升為檔案覆寫風險並要求確認。下一個待辦是 6.7，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 6.7 已完成：`GenerationWorkflow` 整合目標專案重驗證、相依性探索、輸出衝突、一次性確認、可取消執行與結果差異；隔離暫存專案測試完成 Controller、Razor Page 與 EF Migration 案例。下一個待辦是 7.1，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 6.7 已完成：`GenerationWorkflow` 整合目標專案重驗證、相依性探索、輸出衝突、一次性確認、可取消執行與結果差異；隔離暫存專案測試完成 Controller、Razor Page 與 EF Migration 案例。
+- OpenSpec 7.1 已完成：Avalonia 主視窗提供可收合左側導覽、功能群組內容區，以及首頁/工作區、歷程與設定頁；UI ViewModel 測試驗證八組導航與切換時保留工作區/目標專案。下一個待辦是 7.2，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。

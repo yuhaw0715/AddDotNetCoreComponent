@@ -19,6 +19,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _selectedTemplateMode = "含讀寫動作";
     private bool _useAsyncActions = true;
     private bool _includeApiActions;
+    private bool _isNavigationCollapsed;
     private bool _isConfirmationVisible;
     private bool _isRunning;
     private bool _hasResult;
@@ -39,6 +40,7 @@ public sealed class MainWindowViewModel : ObservableObject
         CancelConfirmationCommand = new RelayCommand(() => IsConfirmationVisible = false);
         CancelExecutionCommand = new RelayCommand(CancelExecution, () => IsRunning);
         ClearResultCommand = new RelayCommand(ClearResult);
+        ToggleNavigationCommand = new RelayCommand(ToggleNavigation);
 
         foreach (var item in DemoCatalog.Navigation)
         {
@@ -62,6 +64,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public IRelayCommand CancelConfirmationCommand { get; }
     public IRelayCommand CancelExecutionCommand { get; }
     public IRelayCommand ClearResultCommand { get; }
+    public IRelayCommand ToggleNavigationCommand { get; }
 
     public NavigationItem? SelectedNavigation
     {
@@ -84,6 +87,7 @@ public sealed class MainWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(IsWorkspacePage));
             OnPropertyChanged(nameof(IsHistoryPage));
             OnPropertyChanged(nameof(IsSettingsPage));
+            OnPropertyChanged(nameof(IsContentPage));
         }
     }
 
@@ -213,6 +217,22 @@ public sealed class MainWindowViewModel : ObservableObject
         set => SetProperty(ref _isConfirmationVisible, value);
     }
 
+    public bool IsNavigationCollapsed
+    {
+        get => _isNavigationCollapsed;
+        private set
+        {
+            if (SetProperty(ref _isNavigationCollapsed, value))
+            {
+                OnPropertyChanged(nameof(IsNavigationExpanded));
+                OnPropertyChanged(nameof(NavigationPaneWidth));
+            }
+        }
+    }
+
+    public bool IsNavigationExpanded => !IsNavigationCollapsed;
+    public double NavigationPaneWidth => IsNavigationCollapsed ? 72 : 270;
+
     public bool IsRunning
     {
         get => _isRunning;
@@ -257,9 +277,11 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     public bool IsFeatureGroup => SelectedNavigation?.Id is "project" or "component" or "scaffolding" or "efcore" or "custom";
+    public bool IsContentPage => !IsFeatureGroup;
     public bool IsWorkspacePage => SelectedNavigation?.Id == "home";
     public bool IsHistoryPage => SelectedNavigation?.Id == "history";
     public bool IsSettingsPage => SelectedNavigation?.Id == "settings";
+    public bool IsProjectsEmpty => Projects.Count == 0;
     public bool IsDatabaseRisk => SelectedFeature?.Risk == FeatureRisk.DatabaseChange;
     public bool CanExecuteSelectedFeature => SelectedFeature?.Availability == FeatureAvailability.Available;
     public string SelectedFeatureTitle => SelectedFeature?.DisplayName ?? "選擇一項功能";
@@ -281,6 +303,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private async Task ScanWorkspaceAsync()
     {
         Projects.Clear();
+        OnPropertyChanged(nameof(IsProjectsEmpty));
         StatusMessage = "正在掃描 .NET 專案…";
 
         try
@@ -290,6 +313,8 @@ public sealed class MainWindowViewModel : ObservableObject
             {
                 Projects.Add(project);
             }
+
+            OnPropertyChanged(nameof(IsProjectsEmpty));
 
             SelectedProject = Projects.FirstOrDefault();
             StatusMessage = Projects.Count == 0
@@ -306,8 +331,10 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         WorkspacePath = "/Users/demo/Projects/CommerceSuite";
         Projects.Clear();
+        OnPropertyChanged(nameof(IsProjectsEmpty));
         Projects.Add(new ProjectInfo("Commerce.Api", "/Users/demo/Projects/CommerceSuite/src/Commerce.Api/Commerce.Api.csproj", "net10.0", "Microsoft.NET.Sdk.Web"));
         Projects.Add(new ProjectInfo("Commerce.Domain", "/Users/demo/Projects/CommerceSuite/src/Commerce.Domain/Commerce.Domain.csproj", "net10.0", "Microsoft.NET.Sdk"));
+        OnPropertyChanged(nameof(IsProjectsEmpty));
         SelectedProject = Projects[0];
         StatusMessage = "已載入示範工作區 · 2 個專案";
     }
@@ -373,6 +400,8 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     private void CancelExecution() => _executionCancellation?.Cancel();
+
+    private void ToggleNavigation() => IsNavigationCollapsed = !IsNavigationCollapsed;
 
     private void ClearResult()
     {

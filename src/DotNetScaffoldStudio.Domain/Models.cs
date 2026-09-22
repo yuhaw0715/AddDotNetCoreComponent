@@ -16,7 +16,21 @@ public enum FeatureAvailability
     UnsupportedPlatform
 }
 
-public sealed record NavigationItem(string Id, string Title, string Subtitle);
+public sealed record NavigationItem(string Id, string Title, string Subtitle)
+{
+    public string Glyph => Id switch
+    {
+        "home" => "⌂",
+        "project" => "▦",
+        "component" => "◇",
+        "scaffolding" => "⚙",
+        "efcore" => "◈",
+        "custom" => "✦",
+        "history" => "↺",
+        "settings" => "⚑",
+        _ => "•"
+    };
+}
 
 public sealed record FeatureDefinition(
     string Id,
