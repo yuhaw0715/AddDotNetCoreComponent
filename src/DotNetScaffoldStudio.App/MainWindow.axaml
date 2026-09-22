@@ -293,15 +293,17 @@
                 </Border>
                 <StackPanel Spacing="8">
                   <TextBlock Text="{DynamicResource TargetProject}" FontSize="13" FontWeight="SemiBold" />
-                  <ItemsControl ItemsSource="{Binding Projects}">
-                    <ItemsControl.ItemTemplate>
+                  <ComboBox ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}" IsEnabled="{Binding HasProjects}" PlaceholderText="{DynamicResource NoTargetProjectSelected}">
+                    <ComboBox.ItemTemplate>
                       <DataTemplate DataType="domain:ProjectInfo">
-                        <Border Background="#F9FAFB" CornerRadius="7" Padding="10" Margin="0,2">
+                        <StackPanel Spacing="2">
                           <TextBlock Text="{Binding DisplayText}" />
-                        </Border>
+                          <TextBlock Text="{Binding RelativePath}" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
+                        </StackPanel>
                       </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                  <TextBlock IsVisible="{Binding RequiresProjectSelection}" Text="{DynamicResource TargetProjectSelectionHint}" Foreground="#B54708" FontSize="11" TextWrapping="Wrap" />
                   <TextBlock IsVisible="{Binding IsProjectsEmpty}" Text="{DynamicResource NoProjectsInWorkspace}" Foreground="{DynamicResource MutedBrush}" />
                 </StackPanel>
               </StackPanel>

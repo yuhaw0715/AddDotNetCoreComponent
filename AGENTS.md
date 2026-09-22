@@ -26,6 +26,7 @@
 - OpenSpec 6.6 已完成：命令工廠列出預期輸出，`ExpectedOutputConflictChecker` 在既有 Controller 或輸出目錄時預設阻擋；明確 `force` 會升為檔案覆寫風險並要求確認。下一個待辦是 6.7，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 6.7 已完成：`GenerationWorkflow` 整合目標專案重驗證、相依性探索、輸出衝突、一次性確認、可取消執行與結果差異；隔離暫存專案測試完成 Controller、Razor Page 與 EF Migration 案例。
 - OpenSpec 7.1 已完成：Avalonia 主視窗提供可收合左側導覽、功能群組內容區，以及首頁/工作區、歷程與設定頁；UI ViewModel 測試驗證八組導航與切換時保留工作區/目標專案。下一個待辦是 7.2，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 7.2 已完成：首頁支援工作區掃描結果與目標專案選擇，空工作區仍可使用專案範本，單一專案自動選取，多專案與 Scaffolding/EF Core 功能要求明確目標；掃描失敗不會覆蓋既有工作區狀態。下一個待辦是 7.3，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。

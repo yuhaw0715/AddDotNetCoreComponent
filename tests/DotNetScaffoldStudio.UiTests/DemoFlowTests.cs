@@ -73,10 +73,118 @@ public sealed class DemoFlowTests
         Assert.Single(viewModel.ResultFiles);
     }
 
+    [Fact]
+    public async Task WorkspaceScan_EmptyWorkspaceKeepsTemplateFlowAvailable()
+    {
+        var viewModel = new MainWindowViewModel(
+            new FakeWorkspaceService([]),
+            new FakeExecutionService());
+
+        await viewModel.LoadWorkspaceAsync("/tmp/empty-workspace");
+
+        Assert.Equal("/tmp/empty-workspace", viewModel.WorkspacePath);
+        Assert.True(viewModel.IsProjectsEmpty);
+        Assert.False(viewModel.HasProjects);
+        Assert.Null(viewModel.SelectedProject);
+        Assert.Contains("找不到", viewModel.StatusMessage, StringComparison.Ordinal);
+        Assert.True(viewModel.CanExecuteSelectedFeature);
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "scaffolding");
+
+        Assert.False(viewModel.CanExecuteSelectedFeature);
+    }
+
+    [Fact]
+    public async Task WorkspaceScan_SingleProjectAutomaticallySelectsTarget()
+    {
+        var project = new ProjectInfo("Api", "/tmp/single/Api.csproj", "net10.0", "Microsoft.NET.Sdk.Web", "Api.csproj");
+        var viewModel = new MainWindowViewModel(
+            new FakeWorkspaceService([project]),
+            new FakeExecutionService());
+
+        await viewModel.LoadWorkspaceAsync("/tmp/single");
+
+        Assert.Single(viewModel.Projects);
+        Assert.Same(project, viewModel.SelectedProject);
+        Assert.False(viewModel.RequiresProjectSelection);
+    }
+
+    [Fact]
+    public async Task WorkspaceScan_MultipleProjectsRequiresExplicitTargetSelection()
+    {
+        var projects = new[]
+        {
+            new ProjectInfo("Api", "/tmp/multi/Api/Api.csproj", "net10.0", "Microsoft.NET.Sdk.Web", "Api/Api.csproj"),
+            new ProjectInfo("Tests", "/tmp/multi/Tests/Tests.csproj", "net10.0", "Microsoft.NET.Sdk", "Tests/Tests.csproj")
+        };
+        var viewModel = new MainWindowViewModel(
+            new FakeWorkspaceService(projects),
+            new FakeExecutionService());
+
+        await viewModel.LoadWorkspaceAsync("/tmp/multi");
+
+        Assert.Equal(2, viewModel.Projects.Count);
+        Assert.Null(viewModel.SelectedProject);
+        Assert.True(viewModel.RequiresProjectSelection);
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "scaffolding");
+
+        Assert.False(viewModel.CanExecuteSelectedFeature);
+
+        viewModel.SelectedProject = projects[1];
+
+        Assert.False(viewModel.RequiresProjectSelection);
+        Assert.Contains(projects[1].Path, viewModel.CommandPreviewText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WorkspaceScan_FailureKeepsPreviousWorkspaceAndSelection()
+    {
+        var project = new ProjectInfo("Api", "/tmp/valid/Api.csproj", "net10.0", "Microsoft.NET.Sdk.Web");
+        var viewModel = new MainWindowViewModel(
+            new FailOnSecondWorkspaceService(project),
+            new FakeExecutionService());
+
+        await viewModel.LoadWorkspaceAsync("/tmp/valid");
+        var previousProject = viewModel.SelectedProject;
+        await viewModel.LoadWorkspaceAsync("/tmp/invalid");
+
+        Assert.Equal("/tmp/valid", viewModel.WorkspacePath);
+        Assert.Same(previousProject, viewModel.SelectedProject);
+        Assert.Contains("無法載入", viewModel.StatusMessage, StringComparison.Ordinal);
+    }
+
     private sealed class FakeWorkspaceService : IWorkspaceService
     {
+        private readonly IReadOnlyList<ProjectInfo> _projects;
+        private readonly Exception? _exception;
+
+        public FakeWorkspaceService(IReadOnlyList<ProjectInfo>? projects = null, Exception? exception = null)
+        {
+            _projects = projects ?? [];
+            _exception = exception;
+        }
+
         public Task<IReadOnlyList<ProjectInfo>> ScanProjectsAsync(string path, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<ProjectInfo>>([]);
+            _exception is null
+                ? Task.FromResult(_projects)
+                : Task.FromException<IReadOnlyList<ProjectInfo>>(_exception);
+    }
+
+    private sealed class FailOnSecondWorkspaceService : IWorkspaceService
+    {
+        private readonly ProjectInfo _project;
+        private int _calls;
+
+        public FailOnSecondWorkspaceService(ProjectInfo project) => _project = project;
+
+        public Task<IReadOnlyList<ProjectInfo>> ScanProjectsAsync(string path, CancellationToken cancellationToken)
+        {
+            _calls++;
+            return _calls == 1
+                ? Task.FromResult<IReadOnlyList<ProjectInfo>>([_project])
+                : Task.FromException<IReadOnlyList<ProjectInfo>>(new InvalidOperationException("路徑無法讀取"));
+        }
     }
 
     private sealed class FakeExecutionService : IDemoExecutionService

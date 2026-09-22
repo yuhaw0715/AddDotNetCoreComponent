@@ -24,4 +24,6 @@
   <x:String x:Key="NoExecutionHistory">目前尚無執行紀錄。</x:String>
   <x:String x:Key="EnableSafeModePrompt">啟用安全模式提示</x:String>
   <x:String x:Key="ShowConfirmationBeforeExecution">命令執行前顯示確認</x:String>
+  <x:String x:Key="TargetProjectSelectionHint">工作區包含多個專案，請明確選擇產生目標。</x:String>
+  <x:String x:Key="NoTargetProjectSelected">尚未選擇目標專案。</x:String>
 </ResourceDictionary>

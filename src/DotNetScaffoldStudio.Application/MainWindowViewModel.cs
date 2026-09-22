@@ -20,6 +20,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private bool _useAsyncActions = true;
     private bool _includeApiActions;
     private bool _isNavigationCollapsed;
+    private bool _isScanning;
     private bool _isConfirmationVisible;
     private bool _isRunning;
     private bool _hasResult;
@@ -131,6 +132,10 @@ public sealed class MainWindowViewModel : ObservableObject
             if (SetProperty(ref _selectedProject, value))
             {
                 OnPropertyChanged(nameof(CommandPreviewText));
+                OnPropertyChanged(nameof(RequiresProjectSelection));
+                OnPropertyChanged(nameof(CanExecuteSelectedFeature));
+                OnPropertyChanged(nameof(AvailabilityMessage));
+                RequestExecutionCommand.NotifyCanExecuteChanged();
             }
         }
     }
@@ -233,6 +238,18 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool IsNavigationExpanded => !IsNavigationCollapsed;
     public double NavigationPaneWidth => IsNavigationCollapsed ? 72 : 270;
 
+    public bool IsScanning
+    {
+        get => _isScanning;
+        private set
+        {
+            if (SetProperty(ref _isScanning, value))
+            {
+                ScanWorkspaceCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
     public bool IsRunning
     {
         get => _isRunning;
@@ -282,48 +299,72 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool IsHistoryPage => SelectedNavigation?.Id == "history";
     public bool IsSettingsPage => SelectedNavigation?.Id == "settings";
     public bool IsProjectsEmpty => Projects.Count == 0;
+    public bool HasProjects => !IsProjectsEmpty;
+    public bool IsMultipleProjects => Projects.Count > 1;
+    public bool RequiresProjectSelection => IsMultipleProjects && SelectedProject is null;
+    public bool RequiresTargetProject => SelectedFeature?.Category is "scaffolding" or "efcore";
     public bool IsDatabaseRisk => SelectedFeature?.Risk == FeatureRisk.DatabaseChange;
-    public bool CanExecuteSelectedFeature => SelectedFeature?.Availability == FeatureAvailability.Available;
+    public bool CanExecuteSelectedFeature =>
+        SelectedFeature?.Availability == FeatureAvailability.Available &&
+        (!RequiresTargetProject || SelectedProject is not null);
     public string SelectedFeatureTitle => SelectedFeature?.DisplayName ?? "選擇一項功能";
     public string SelectedFeatureDescription => SelectedFeature?.Description ?? "從左側選擇功能群組，再挑選要執行的項目。";
     public string SelectedFeatureBadge => SelectedFeature?.Badge ?? string.Empty;
-    public string AvailabilityMessage => SelectedFeature?.AvailabilityReason ?? "此功能可在目前平台使用。";
+    public string AvailabilityMessage => RequiresTargetProject && SelectedProject is null
+        ? "此功能需要先選擇現有的目標專案。"
+        : SelectedFeature?.AvailabilityReason ?? "此功能可在目前平台使用。";
     public string ValidationMessage => string.IsNullOrWhiteSpace(ComponentName) ? "名稱為必填欄位。" : string.Empty;
     public string CommandPreviewText => BuildCommandPreview()?.DisplayText ?? "選擇功能後將顯示命令預覽";
     public string WorkingDirectoryText => BuildCommandPreview()?.WorkingDirectory ?? WorkspacePath;
 
     public async Task LoadWorkspaceAsync(string path)
     {
-        WorkspacePath = path;
-        await ScanWorkspaceAsync();
+        await LoadWorkspaceCoreAsync(path);
     }
 
-    private bool CanScanWorkspace() => !string.IsNullOrWhiteSpace(WorkspacePath) && WorkspacePath != "尚未選擇工作區";
+    private bool CanScanWorkspace() => !IsScanning && !string.IsNullOrWhiteSpace(WorkspacePath) && WorkspacePath != "尚未選擇工作區";
 
-    private async Task ScanWorkspaceAsync()
+    private Task ScanWorkspaceAsync() => LoadWorkspaceCoreAsync(WorkspacePath);
+
+    private async Task LoadWorkspaceCoreAsync(string path)
     {
-        Projects.Clear();
-        OnPropertyChanged(nameof(IsProjectsEmpty));
+        if (string.IsNullOrWhiteSpace(path) || path == "尚未選擇工作區")
+        {
+            StatusMessage = "請先選擇有效的工作區。";
+            return;
+        }
+
+        IsScanning = true;
         StatusMessage = "正在掃描 .NET 專案…";
 
         try
         {
-            var projects = await _workspaceService.ScanProjectsAsync(WorkspacePath, CancellationToken.None);
+            var projects = await _workspaceService.ScanProjectsAsync(path, CancellationToken.None);
+            WorkspacePath = path;
+            Projects.Clear();
             foreach (var project in projects)
             {
                 Projects.Add(project);
             }
 
             OnPropertyChanged(nameof(IsProjectsEmpty));
+            OnPropertyChanged(nameof(HasProjects));
+            OnPropertyChanged(nameof(IsMultipleProjects));
 
-            SelectedProject = Projects.FirstOrDefault();
+            SelectedProject = Projects.Count == 1 ? Projects[0] : null;
             StatusMessage = Projects.Count == 0
                 ? "找不到 .csproj；仍可使用專案範本功能。"
-                : $"已找到 {Projects.Count} 個專案";
+                : Projects.Count == 1
+                    ? "已找到 1 個專案，已自動選取目標。"
+                    : $"已找到 {Projects.Count} 個專案，請選擇目標。";
         }
         catch (Exception exception)
         {
             StatusMessage = $"無法載入工作區：{exception.Message}";
+        }
+        finally
+        {
+            IsScanning = false;
         }
     }
 
@@ -332,9 +373,12 @@ public sealed class MainWindowViewModel : ObservableObject
         WorkspacePath = "/Users/demo/Projects/CommerceSuite";
         Projects.Clear();
         OnPropertyChanged(nameof(IsProjectsEmpty));
+        OnPropertyChanged(nameof(HasProjects));
         Projects.Add(new ProjectInfo("Commerce.Api", "/Users/demo/Projects/CommerceSuite/src/Commerce.Api/Commerce.Api.csproj", "net10.0", "Microsoft.NET.Sdk.Web"));
         Projects.Add(new ProjectInfo("Commerce.Domain", "/Users/demo/Projects/CommerceSuite/src/Commerce.Domain/Commerce.Domain.csproj", "net10.0", "Microsoft.NET.Sdk"));
+        OnPropertyChanged(nameof(IsMultipleProjects));
         OnPropertyChanged(nameof(IsProjectsEmpty));
+        OnPropertyChanged(nameof(HasProjects));
         SelectedProject = Projects[0];
         StatusMessage = "已載入示範工作區 · 2 個專案";
     }
