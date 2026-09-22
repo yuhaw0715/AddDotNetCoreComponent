@@ -51,7 +51,7 @@
 - [x] 6.4 實作八種 ASP.NET Core Scaffolding 命令工廠，並以各模式 snapshot 測試驗證 `-p`/目標專案、模型、DbContext、資料庫提供者與輸出參數。
 - [x] 6.5 實作規格內 EF Core 命令工廠及 `database update` 二次確認資料，並以單元測試驗證 `database drop` 無法被建立。
 - [x] 6.6 實作預期輸出與衝突檢查，並以同名 Controller、既有輸出目錄及 force 參數測試驗證覆寫預設為關閉。
-- [ ] 6.7 整合相依性檢查、參數驗證、確認、執行與結果摘要為可取消工作流程，並以暫存 ASP.NET Core 專案完成至少一個 Controller、Razor/Blazor 及 EF Migration 端到端案例。
+- [x] 6.7 整合相依性檢查、參數驗證、確認、執行與結果摘要為可取消工作流程，並以暫存 ASP.NET Core 專案完成至少一個 Controller、Razor/Blazor 及 EF Migration 端到端案例。
 
 ## 7. Avalonia 桌面體驗
 

@@ -44,6 +44,8 @@ public sealed partial class App : Avalonia.Application
         services.AddSingleton<IAspNetScaffoldingCommandFactory, AspNetScaffoldingCommandFactory>();
         services.AddSingleton<IEfCoreCommandFactory, EfCoreCommandFactory>();
         services.AddSingleton<ExpectedOutputConflictChecker>();
+        services.AddSingleton<CommandRiskPolicy>();
+        services.AddSingleton<GenerationWorkflow>();
         services.AddSingleton<IDotNetTemplateDiscovery>(provider =>
             new DotNetTemplateDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<ICustomTemplateHelpDiscovery>(provider =>

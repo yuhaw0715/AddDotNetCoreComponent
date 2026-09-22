@@ -5,10 +5,10 @@
 - 日期：2026-09-22（Asia/Taipei）
 - 儲存庫：`https://github.com/yuhaw0715/AddDotNetCoreComponent.git`
 - 分支：`main`
-- 目前已推送基準：`main` 與 `origin/main` 應於本次 6.6 task commit 同步；實際 commit 以 `git log -1` 驗證。
+- 目前已推送基準：`main` 與 `origin/main` 應於本次 6.7 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-- OpenSpec 進度：36/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-- 本次 6.6 已完成驗證，commit/push 依使用者要求在本次交付中執行；後續每個 task 仍須獨立完成驗證後再交付。
+- OpenSpec 進度：37/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+- 本次 6.7 已完成驗證，commit/push 依使用者要求在本次交付中執行；後續每個 task 仍須獨立完成驗證後再交付。
 
 ## 產品與目前可操作成果
 
@@ -47,6 +47,7 @@ OpenSpec 已勾選以下區段：
 - 6.4：以 `AspNetScaffoldingCommandFactory` 支援八種 generator；各模式 snapshot 驗證 `-p`、模型、DbContext、資料庫提供者、Identity 檔案、模式與輸出引數，並驗證名稱/路徑錯誤不會建立命令。
 - 6.5：以 `EfCoreCommandFactory` 支援 12 個官方 EF Core 命令；以 `DatabaseUpdateConfirmationData` 搭配遮蔽預覽與 `CommandRiskPolicy` 驗證二次確認，並以測試確保 `database drop` 無法建立。
 - 6.6：以 `ExpectedOutputConflictChecker` 檢查命令預期輸出與既有相對路徑；同名 Controller、既有 `dotnet new` 輸出目錄會阻擋一般執行，`force` 只有在檔案覆寫風險確認後才可繼續。
+- 6.7：以 `GenerationWorkflow` 串接目標專案重驗證、相依性探索、參數/輸出檢查、確認 token、取消與既有差異摘要；隔離整合測試以 fixture runner 完成 Controller、Razor Page、EF Migration 三條流程。
 
 重要實作位置：
 
@@ -76,7 +77,7 @@ OpenSpec 已勾選以下區段：
 2. `OfficialFeatureCatalog` 尚未取代 `DemoCatalog`，所以畫面只顯示少量代表功能。
 3. OpenSpec 3.4 已完成：正式工作流程會在修改命令前後擷取 Git/檔案狀態；取消後以不受取消 token 影響的掃描回報部分輸出。CommandProbe 整合測試驗證正常終止嘗試、必要時終止程序樹與差異摘要。
 4. OpenSpec 5.1–5.8 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6/5.7 的本機工具與 NuGet 服務、5.8 的 guidance service 已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。
-5. OpenSpec 6.1–6.6 已完成 schema 表單狀態、欄位驗證、三類命令工廠與輸出衝突檢查，但尚未接入 Avalonia UI；可取消端到端產生流程尚未完成，OpenSpec 6.7 尚未完成。
+5. OpenSpec 6.1–6.7 已完成 schema 表單狀態、欄位驗證、三類命令工廠、輸出衝突檢查與可取消產生流程，但尚未接入 Avalonia UI；OpenSpec 7.x 的桌面體驗仍待實作。
 6. UI 是操作流程 Demo；搜尋欄、完整狀態呈現、正式確認類型、歷程、設定與 Finder 動作仍待實作。現有 UI 測試主要驗證 ViewModel，不是完整 headless Avalonia smoke suite。
 7. XAML 仍有部分繁體中文硬編碼，OpenSpec 7.7 未完成。
 8. 目前 `.app` 是 Debug、framework-dependent、osx-arm64 示意成品；不是 9.4 要求的 arm64/x64 self-contained 發布成果。
@@ -84,18 +85,18 @@ OpenSpec 已勾選以下區段：
 
 ## 下一步建議順序
 
-接續 OpenSpec 6.7：
+接續 OpenSpec 7.1：
 
-1. 整合相依性檢查、參數驗證、確認、執行與結果摘要為可取消工作流程。
-2. 以隔離暫存 ASP.NET Core 專案完成 Controller、Razor/Blazor 與 EF Migration 端到端案例。
+1. 建立 Avalonia 主視窗、可折疊左側導覽及內容區，涵蓋規格列出的主要功能群組。
+2. 依序完成 7.2–7.7 的工作區、功能清單、表單、確認、輸出結果與資源化 UI。
 3. 每完成一項即執行適用測試、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 最近一次完整驗證（2026-09-22）
 
-OpenSpec 6.6 完成後的驗證結果：
+OpenSpec 6.7 完成後的驗證結果：
 
 - Build：0 警告、0 錯誤。
-- Test：101 項通過（Integration 36、UI 2、Unit 63）；另有 6.6 同名 Controller、既有輸出目錄、force 覆寫確認與無衝突案例通過。
+- Test：105 項通過（Integration 37、UI 2、Unit 66）；另有 6.7 workflow preflight、確認/取消與三條暫存專案端到端案例通過。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
@@ -152,7 +153,7 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 6.7：整合相依性檢查、參數驗證、確認、執行與結果摘要為可取消工作流程，並以隔離暫存專案完成端到端案例。完成後只在對應驗證全部通過時勾選 6.7，不要提前開始 7.1。
+下一個實作目標是 OpenSpec 7.1：建立 Avalonia 主視窗、可折疊左側導覽及內容區，涵蓋規格列出的主要功能群組。完成後只在對應驗證全部通過時勾選 7.1，不要提前開始 7.2。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 
