@@ -5,10 +5,10 @@
 - 日期：2026-09-22（Asia/Taipei）
 - 儲存庫：`https://github.com/yuhaw0715/AddDotNetCoreComponent.git`
 - 分支：`main`
-- 目前已推送基準：`main` 與 `origin/main` 應於本次 5.8 task commit 同步；實際 commit 以 `git log -1` 驗證。
+- 目前已推送基準：`main` 與 `origin/main` 應於本次 6.1 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-- OpenSpec 進度：30/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-- 本次 5.8 已完成驗證，commit/push 依使用者要求在本次交付中執行；後續每個 task 仍須獨立完成驗證後再交付。
+- OpenSpec 進度：31/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+- 本次 6.1 已完成驗證，commit/push 依使用者要求在本次交付中執行；後續每個 task 仍須獨立完成驗證後再交付。
 
 ## 產品與目前可操作成果
 
@@ -41,6 +41,7 @@ OpenSpec 已勾選以下區段：
 - 5.6：以 `LocalToolInstallationService` 建立 `.config/dotnet-tools.json`，再以 `dotnet tool install/update --local` 安裝工作區本機工具；隔離整合測試驗證工具資訊清單、可執行 fixture、重驗證、環境變數與檔案差異。
 - 5.7：以 `NuGetPackageInstallationService` 只對選定 `.csproj` 建立 `dotnet add package --no-restore` 與 `dotnet restore` 兩階段計畫；整合測試驗證套件版本、其他專案不受影響、restore 失敗階段與不自動回復的檔案差異。
 - 5.8：以 `DependencyGuidanceService` 區分缺少 SDK 的官方說明與缺少工作負載的獨立確認；`WorkloadInstallationWorkflow` 使用一次性確認 token，未確認不呼叫 `IWorkloadInstallationAdapter`，fake adapter 測試驗證零網路/修改操作。
+- 6.1：以 `ParameterFormState` 和 typed `ParameterValue` 依 schema 保存布林、列舉、路徑、清單、一般文字與機密值；進階欄位切換只改變 visibility，不丟失已輸入值。
 
 重要實作位置：
 
@@ -58,6 +59,7 @@ OpenSpec 已勾選以下區段：
 - 本機工具安裝計畫：`src/DotNetScaffoldStudio.Infrastructure/LocalToolInstallationService.cs`；隔離 fixture 與測試：`tests/DotNetScaffoldStudio.CommandProbe/Program.cs`、`tests/DotNetScaffoldStudio.IntegrationTests/LocalToolInstallationServiceTests.cs`
 - NuGet 套件安裝計畫：`src/DotNetScaffoldStudio.Infrastructure/NuGetPackageInstallationService.cs`；階段 fixture 與測試：`tests/DotNetScaffoldStudio.IntegrationTests/NuGetPackageInstallationServiceTests.cs`
 - SDK/工作負載說明與確認：`src/DotNetScaffoldStudio.Application/DependencyGuidanceService.cs`、`src/DotNetScaffoldStudio.Domain/DependencyGuidanceModels.cs`；fake adapter 測試：`tests/DotNetScaffoldStudio.UnitTests/DependencyGuidanceTests.cs`
+- Schema 表單狀態：`src/DotNetScaffoldStudio.Application/ParameterFormState.cs`、`src/DotNetScaffoldStudio.Domain/ParameterFormModels.cs`；單元測試：`tests/DotNetScaffoldStudio.UnitTests/ParameterFormStateTests.cs`
 - 工作區與邊界：`WorkspaceService.cs`、`WorkspacePathResolver.cs`
 - Git 與檔案差異：`GitStatusService.cs`、`FileSnapshotService.cs`、`ExecutionDifferenceAggregator.cs`
 - Avalonia Demo：`src/DotNetScaffoldStudio.App/MainWindow.axaml` 與 `MainWindowViewModel.cs`
@@ -68,7 +70,7 @@ OpenSpec 已勾選以下區段：
 2. `OfficialFeatureCatalog` 尚未取代 `DemoCatalog`，所以畫面只顯示少量代表功能。
 3. OpenSpec 3.4 已完成：正式工作流程會在修改命令前後擷取 Git/檔案狀態；取消後以不受取消 token 影響的掃描回報部分輸出。CommandProbe 整合測試驗證正常終止嘗試、必要時終止程序樹與差異摘要。
 4. OpenSpec 5.1–5.8 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6/5.7 的本機工具與 NuGet 服務、5.8 的 guidance service 已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。
-5. schema 表單、正式命令工廠與端到端產生流程尚未完成，OpenSpec 6.1–6.7 全部未完成。
+5. OpenSpec 6.1 已完成 schema 表單狀態，但尚未接入 Avalonia UI；正式命令工廠、輸入驗證與端到端產生流程尚未完成，OpenSpec 6.2–6.7 尚未完成。
 6. UI 是操作流程 Demo；搜尋欄、完整狀態呈現、正式確認類型、歷程、設定與 Finder 動作仍待實作。現有 UI 測試主要驗證 ViewModel，不是完整 headless Avalonia smoke suite。
 7. XAML 仍有部分繁體中文硬編碼，OpenSpec 7.7 未完成。
 8. 目前 `.app` 是 Debug、framework-dependent、osx-arm64 示意成品；不是 9.4 要求的 arm64/x64 self-contained 發布成果。
@@ -76,18 +78,18 @@ OpenSpec 已勾選以下區段：
 
 ## 下一步建議順序
 
-第 5 節已完成，接續進入第 6 節：
+接續 OpenSpec 6.2：
 
-1. 實作 6.1 schema 驅動表單狀態。
-2. 依序完成 6.2–6.7 的參數、命令與端到端產生流程。
+1. 實作必填、名稱、路徑、條件式、相依及互斥驗證。
+2. 依序完成 6.3–6.7 的命令工廠與端到端產生流程。
 3. 每完成一項即執行適用測試、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 最近一次完整驗證（2026-09-22）
 
-OpenSpec 5.8 完成後的驗證結果：
+OpenSpec 6.1 完成後的驗證結果：
 
 - Build：0 警告、0 錯誤。
-- Test：82 項通過（Integration 36、UI 2、Unit 44）；另有 5.8 guidance 與未確認 adapter 零呼叫單元測試單獨通過。
+- Test：84 項通過（Integration 36、UI 2、Unit 46）；另有 6.1 typed form state 與進階切換保留值單元測試單獨通過。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
@@ -144,7 +146,7 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 6.1：建立 schema 驅動表單狀態。完成後只在對應驗證全部通過時勾選 6.1，不要提前開始 6.2。
+下一個實作目標是 OpenSpec 6.2：建立欄位級輸入驗證。完成後只在對應驗證全部通過時勾選 6.2，不要提前開始 6.3。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 
