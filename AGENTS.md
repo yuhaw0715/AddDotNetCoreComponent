@@ -17,6 +17,7 @@
 - OpenSpec 5.5 已完成：`DependencyPlanWorkflow` 以一次性計畫確認 token 執行結構化相依性步驟，逐步重驗證並保留部分成功、失敗與 Git／檔案差異。
 - OpenSpec 5.6 已完成：`LocalToolInstallationService` 先建立工作區 `.config/dotnet-tools.json`，再以 `--local` 安裝或更新工具；隔離整合測試驗證 executable、檔案差異、重驗證與無 `--global` 命令。
 - OpenSpec 5.7 已完成：`NuGetPackageInstallationService` 僅針對選定 `.csproj` 建立 `dotnet add package --no-restore` 與 `dotnet restore` 兩階段計畫，逐步重驗證並在 restore 失敗時保留專案檔差異與錯誤階段。下一個待辦是 5.8，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 5.8 已完成：`DependencyGuidanceService` 對缺少 SDK 提供官方說明、對缺少工作負載要求獨立確認，`WorkloadInstallationWorkflow` 在確認前不呼叫 adapter；fake adapter 單元測試驗證未確認時不啟動任何網路或修改操作。下一個待辦是 6.1，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。

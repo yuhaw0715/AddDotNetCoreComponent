@@ -38,6 +38,7 @@ public sealed partial class App : Avalonia.Application
             new LocalToolInstallationService(provider.GetRequiredService<IDependencyDiscovery>()));
         services.AddSingleton<INuGetPackageInstallationService>(provider =>
             new NuGetPackageInstallationService(provider.GetRequiredService<IDependencyDiscovery>()));
+        services.AddSingleton<IDependencyGuidanceService, DependencyGuidanceService>();
         services.AddSingleton<IDotNetTemplateDiscovery>(provider =>
             new DotNetTemplateDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<ICustomTemplateHelpDiscovery>(provider =>

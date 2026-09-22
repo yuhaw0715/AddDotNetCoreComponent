@@ -72,6 +72,28 @@ public interface INuGetPackageInstallationService
         CancellationToken cancellationToken);
 }
 
+public interface IDependencyGuidanceService
+{
+    DependencyGuidanceResult Build(DependencyDiscoveryResult discovery);
+}
+
+public interface IWorkloadInstallationAdapter
+{
+    Task<WorkloadInstallationAdapterResult> InstallAsync(
+        DependencyRequirement requirement,
+        CancellationToken cancellationToken);
+}
+
+public interface IWorkloadInstallationWorkflow
+{
+    WorkloadInstallationPlan CreatePlan(DependencyGuidance guidance);
+
+    Task<WorkloadInstallationExecutionResult> ExecuteAsync(
+        WorkloadInstallationPlan plan,
+        WorkloadInstallationConfirmation? confirmation,
+        CancellationToken cancellationToken);
+}
+
 public interface IDotNetTemplateDiscovery
 {
     Task<DotNetTemplateDiscoveryResult> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);
