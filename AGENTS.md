@@ -21,6 +21,7 @@
 - OpenSpec 6.1 已完成：`ParameterFormState` 依 schema 建立布林、列舉、路徑、清單、一般文字與機密欄位的 typed value，常用/進階切換只改變可見性且保留所有值。下一個待辦是 6.2，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 6.2 已完成：`ParameterValidator` 依功能 schema 驗證必填、名稱、工作區路徑、條件式必填與互斥欄位，回傳帶欄位識別字的繁中錯誤且不輸出機密值。
 - OpenSpec 6.3 已完成：`DotNetNewCommandFactory` 依官方 46 個範本 schema 建立結構化 `dotnet new` 命令，固定使用 canonical short name、工作區工作目錄與相對輸出目標，並在建立前執行參數驗證。下一個待辦是 6.4，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 6.4 已完成：`AspNetScaffoldingCommandFactory` 支援八種 generator，將模式、`-p` 目標專案、名稱、模型、DbContext、資料庫提供者、Identity 檔案與輸出位置建立為結構化引數，並在建立前驗證工作區邊界。下一個待辦是 6.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。

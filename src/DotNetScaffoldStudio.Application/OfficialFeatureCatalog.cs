@@ -133,24 +133,73 @@ public static class OfficialFeatureCatalog
             FeatureGroup.AspNetScaffolding,
             "aspnet-codegenerator",
             [id],
-            parameters:
-            [
-                new ParameterDefinition("project", "目標專案", ParameterValueKind.Path, isRequired: true),
-                new ParameterDefinition("variant", "範本", ParameterValueKind.Enumeration, allowedValues: variants),
-                new ParameterDefinition("name", "名稱", ParameterValueKind.Text, isAdvanced: true)
-            ],
+            parameters: CreateScaffoldParameters(id, variants),
             dependencies:
             [
                 CodeGenerator,
                 new DependencyRequirement(DependencyKind.NuGetPackage, "Microsoft.VisualStudio.Web.CodeGeneration.Design", "10.0")
             ],
             variants: variants,
-            constraints:
-            [
-                ParameterConstraint.PathWithinWorkspace("project"),
-                ParameterConstraint.NameFormat("name"),
-                ParameterConstraint.RequiredWhen("variant", "name", "CRUD")
-            ]);
+            constraints: CreateScaffoldConstraints(id));
+
+    private static IReadOnlyList<ParameterConstraint> CreateScaffoldConstraints(string id)
+    {
+        var constraints = new List<ParameterConstraint>
+        {
+            ParameterConstraint.PathWithinWorkspace("project"),
+            ParameterConstraint.PathWithinWorkspace("output")
+        };
+        if (id is not "identity" and not "blazor-identity")
+        {
+            constraints.Add(ParameterConstraint.NameFormat("name"));
+            constraints.Add(ParameterConstraint.RequiredWhen("variant", "name", "CRUD"));
+        }
+
+        return constraints;
+    }
+
+    private static IReadOnlyList<ParameterDefinition> CreateScaffoldParameters(
+        string id,
+        IReadOnlyList<string> variants)
+    {
+        var parameters = new List<ParameterDefinition>
+        {
+            new("project", "目標專案", ParameterValueKind.Path, isRequired: true),
+            new("variant", "範本", ParameterValueKind.Enumeration, allowedValues: variants)
+        };
+
+        if (id is not "blazor-identity" and not "identity")
+        {
+            parameters.Add(new ParameterDefinition("name", "名稱", ParameterValueKind.Text, isAdvanced: true));
+        }
+
+        if (id is not "area" and not "view" and not "identity" and not "blazor-identity")
+        {
+            parameters.Add(new ParameterDefinition("model", "模型", ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition("dataContext", "DbContext", ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition(
+                "databaseProvider",
+                "資料庫提供者",
+                ParameterValueKind.Enumeration,
+                isAdvanced: true,
+                allowedValues: ["SqlServer", "Sqlite", "Cosmos"]));
+        }
+
+        if (id is "identity" or "blazor-identity")
+        {
+            parameters.Add(new ParameterDefinition("dataContext", "DbContext", ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition(
+                "databaseProvider",
+                "資料庫提供者",
+                ParameterValueKind.Enumeration,
+                isAdvanced: true,
+                allowedValues: ["SqlServer", "Sqlite", "Cosmos"]));
+            parameters.Add(new ParameterDefinition("files", "Identity 檔案", ParameterValueKind.List, isAdvanced: true));
+        }
+
+        parameters.Add(new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true));
+        return parameters;
+    }
 
     private static CatalogFeature Ef(
         string id,
