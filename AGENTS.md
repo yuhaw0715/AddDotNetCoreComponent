@@ -28,6 +28,7 @@
 - OpenSpec 7.1 已完成：Avalonia 主視窗提供可收合左側導覽、功能群組內容區，以及首頁/工作區、歷程與設定頁；UI ViewModel 測試驗證八組導航與切換時保留工作區/目標專案。下一個待辦是 7.2，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 7.2 已完成：首頁支援工作區掃描結果與目標專案選擇，空工作區仍可使用專案範本，單一專案自動選取，多專案與 Scaffolding/EF Core 功能要求明確目標；掃描失敗不會覆蓋既有工作區狀態。下一個待辦是 7.3，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - OpenSpec 7.3 已完成：功能清單支援依名稱、短名稱、描述與相依性搜尋，卡片呈現相依性、可用性、風險與平台限制；WPF/WinForms 在 macOS 可瀏覽但無法執行。下一個待辦是 7.4，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 7.4 已完成：`ParameterEditorViewModel` 依 schema 建立 typed 文字、列舉、布林與機密欄位，支援進階欄位切換、欄位級驗證、即時命令預覽與 Secret 遮罩。下一個待辦是 7.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。

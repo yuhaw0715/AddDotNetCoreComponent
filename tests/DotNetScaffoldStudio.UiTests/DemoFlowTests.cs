@@ -93,6 +93,66 @@ public sealed class DemoFlowTests
     }
 
     [Fact]
+    public void ParameterEditor_UsesSchemaAndKeepsAdvancedValues()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());
+        Assert.NotNull(viewModel.ParameterEditor);
+        var editor = viewModel.ParameterEditor!;
+
+        Assert.Contains(editor.VisibleFields, field => field.Definition.Id == "name");
+        Assert.DoesNotContain(editor.VisibleFields, field => field.Definition.Id == "output");
+
+        var nameField = Assert.IsType<TextParameterFieldViewModel>(editor.Fields.Single(field => field.Definition.Id == "name"));
+        nameField.TextValue = "1 invalid";
+
+        Assert.False(editor.IsValid);
+        Assert.False(viewModel.RequestExecutionCommand.CanExecute(null));
+        Assert.Contains("名稱格式", nameField.ErrorMessage, StringComparison.Ordinal);
+
+        nameField.TextValue = "InvoicesController";
+        editor.ShowAdvanced = true;
+        var outputField = Assert.IsType<TextParameterFieldViewModel>(editor.Fields.Single(field => field.Definition.Id == "output"));
+        outputField.TextValue = "Generated";
+        editor.ShowAdvanced = false;
+
+        Assert.Equal("Generated", outputField.TextValue);
+        Assert.DoesNotContain(outputField, editor.VisibleFields);
+        Assert.Contains("InvoicesController", viewModel.CommandPreviewText, StringComparison.Ordinal);
+        Assert.Contains("Generated", viewModel.CommandPreviewText, StringComparison.Ordinal);
+        Assert.True(editor.IsValid);
+    }
+
+    [Fact]
+    public void ParameterEditor_UpdatesScaffoldingPreviewAndMasksSecretFields()
+    {
+        var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());
+        viewModel.UseDemoWorkspaceCommand.Execute(null);
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "scaffolding");
+        viewModel.SelectedFeature = viewModel.VisibleFeatures.Single(feature => feature.Id == "controller");
+
+        Assert.NotNull(viewModel.ParameterEditor);
+        var scaffoldingEditor = viewModel.ParameterEditor!;
+        var variant = Assert.IsType<EnumerationParameterFieldViewModel>(scaffoldingEditor.Fields.Single(field => field.Definition.Id == "variant"));
+
+        Assert.Equal("含讀寫動作", variant.SelectedValue);
+        variant.SelectedValue = "REST API";
+
+        Assert.Contains("--restWithNoViews", viewModel.CommandPreviewText, StringComparison.Ordinal);
+
+        viewModel.SelectedNavigation = viewModel.NavigationItems.Single(item => item.Id == "efcore");
+        viewModel.SelectedFeature = viewModel.VisibleFeatures.Single(feature => feature.Id == "dbcontext-scaffold");
+        Assert.NotNull(viewModel.ParameterEditor);
+        var efEditor = viewModel.ParameterEditor!;
+        var secret = Assert.IsType<TextParameterFieldViewModel>(efEditor.Fields.Single(field => field.Definition.Id == "connection"));
+
+        secret.TextValue = "Server=private.example;Password=secret";
+
+        Assert.Equal('●', secret.PasswordChar);
+        Assert.DoesNotContain("private.example", viewModel.CommandPreviewText, StringComparison.Ordinal);
+        Assert.DoesNotContain("secret", viewModel.CommandPreviewText, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DemoExecution_RequiresConfirmationAndReturnsSimulatedChanges()
     {
         var viewModel = new MainWindowViewModel(new FakeWorkspaceService(), new FakeExecutionService());

@@ -9,6 +9,7 @@ public sealed class MainWindowViewModel : ObservableObject
 {
     private readonly IWorkspaceService _workspaceService;
     private readonly IDemoExecutionService _executionService;
+    private readonly ParameterValidator _parameterValidator;
     private CancellationTokenSource? _executionCancellation;
     private NavigationItem? _selectedNavigation;
     private FeatureDefinition? _selectedFeature;
@@ -31,9 +32,18 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _resultSummary = string.Empty;
 
     public MainWindowViewModel(IWorkspaceService workspaceService, IDemoExecutionService executionService)
+        : this(workspaceService, executionService, new ParameterValidator())
+    {
+    }
+
+    public MainWindowViewModel(
+        IWorkspaceService workspaceService,
+        IDemoExecutionService executionService,
+        ParameterValidator parameterValidator)
     {
         _workspaceService = workspaceService;
         _executionService = executionService;
+        _parameterValidator = parameterValidator;
 
         ScanWorkspaceCommand = new AsyncRelayCommand(ScanWorkspaceAsync, CanScanWorkspace);
         UseDemoWorkspaceCommand = new RelayCommand(UseDemoWorkspace);
@@ -67,6 +77,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public IRelayCommand CancelExecutionCommand { get; }
     public IRelayCommand ClearResultCommand { get; }
     public IRelayCommand ToggleNavigationCommand { get; }
+    public ParameterEditorViewModel? ParameterEditor { get; private set; }
 
     public NavigationItem? SelectedNavigation
     {
@@ -108,6 +119,7 @@ public sealed class MainWindowViewModel : ObservableObject
             };
 
             OutputPath = value?.Category == "project" ? "./generated" : "Controllers";
+            ReplaceParameterEditor(value);
             OnPropertyChanged(nameof(SelectedFeatureTitle));
             OnPropertyChanged(nameof(SelectedFeatureDescription));
             OnPropertyChanged(nameof(SelectedFeatureBadge));
@@ -321,7 +333,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public string AvailabilityMessage => RequiresTargetProject && SelectedProject is null
         ? "此功能需要先選擇現有的目標專案。"
         : SelectedFeature?.AvailabilityReason ?? "此功能可在目前平台使用。";
-    public string ValidationMessage => string.IsNullOrWhiteSpace(ComponentName) ? "名稱為必填欄位。" : string.Empty;
+    public string ValidationMessage => ParameterEditor?.FirstErrorMessage ??
+        (string.IsNullOrWhiteSpace(ComponentName) ? "名稱為必填欄位。" : string.Empty);
     public string CommandPreviewText => BuildCommandPreview()?.DisplayText ?? "選擇功能後將顯示命令預覽";
     public string WorkingDirectoryText => BuildCommandPreview()?.WorkingDirectory ?? WorkspacePath;
     public string FeatureCountSummary => $"{VisibleFeatures.Count} 項功能";
@@ -350,6 +363,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             var projects = await _workspaceService.ScanProjectsAsync(path, CancellationToken.None);
             WorkspacePath = path;
+            ParameterEditor?.SetWorkspaceRoot(path);
             Projects.Clear();
             foreach (var project in projects)
             {
@@ -380,6 +394,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private void UseDemoWorkspace()
     {
         WorkspacePath = "/Users/demo/Projects/CommerceSuite";
+        ParameterEditor?.SetWorkspaceRoot(WorkspacePath);
         Projects.Clear();
         OnPropertyChanged(nameof(IsProjectsEmpty));
         OnPropertyChanged(nameof(HasProjects));
@@ -395,7 +410,8 @@ public sealed class MainWindowViewModel : ObservableObject
     private bool CanRequestExecution() =>
         !IsRunning &&
         CanExecuteSelectedFeature &&
-        !string.IsNullOrWhiteSpace(ComponentName);
+        !string.IsNullOrWhiteSpace(ComponentName) &&
+        (ParameterEditor?.IsValid ?? true);
 
     private void RequestExecution()
     {
@@ -455,6 +471,100 @@ public sealed class MainWindowViewModel : ObservableObject
     private void CancelExecution() => _executionCancellation?.Cancel();
 
     private void ToggleNavigation() => IsNavigationCollapsed = !IsNavigationCollapsed;
+
+    private void ReplaceParameterEditor(FeatureDefinition? feature)
+    {
+        if (ParameterEditor is not null)
+        {
+            ParameterEditor.ValuesChanged -= ParameterEditorOnValuesChanged;
+        }
+
+        ParameterEditor = feature is null
+            ? null
+            : new ParameterEditorViewModel(
+                CreateParameterSchema(feature),
+                _parameterValidator,
+                WorkspacePath,
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["name"] = ComponentName,
+                    ["output"] = OutputPath,
+                    ["variant"] = SelectedTemplateMode
+                });
+        if (ParameterEditor is not null)
+        {
+            ParameterEditor.ValuesChanged += ParameterEditorOnValuesChanged;
+        }
+
+        OnPropertyChanged(nameof(ParameterEditor));
+        OnPropertyChanged(nameof(ValidationMessage));
+    }
+
+    private void ParameterEditorOnValuesChanged()
+    {
+        if (ParameterEditor is null)
+        {
+            return;
+        }
+
+        var name = ParameterEditor.GetTextValue("name");
+        if (name is not null && !string.Equals(ComponentName, name, StringComparison.Ordinal))
+        {
+            ComponentName = name;
+        }
+
+        var output = ParameterEditor.GetTextValue("output");
+        if (output is not null && !string.Equals(OutputPath, output, StringComparison.Ordinal))
+        {
+            OutputPath = output;
+        }
+
+        var variant = ParameterEditor.GetTextValue("variant");
+        if (variant is not null && !string.Equals(SelectedTemplateMode, variant, StringComparison.Ordinal))
+        {
+            SelectedTemplateMode = variant;
+        }
+
+        OnPropertyChanged(nameof(ValidationMessage));
+        RequestExecutionCommand.NotifyCanExecuteChanged();
+    }
+
+    private static CatalogFeature CreateParameterSchema(FeatureDefinition feature)
+    {
+        var parameters = new List<ParameterDefinition>
+        {
+            new("name", "名稱", ParameterValueKind.Text, isRequired: true),
+            new("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true),
+            new("force", "覆寫既有輸出", ParameterValueKind.Boolean, isAdvanced: true)
+        };
+        var constraints = new List<ParameterConstraint>
+        {
+            ParameterConstraint.NameFormat("name"),
+            ParameterConstraint.PathWithinWorkspace("output")
+        };
+
+        if (feature.Category == "scaffolding")
+        {
+            parameters.Add(new ParameterDefinition("variant", "範本模式", ParameterValueKind.Enumeration, allowedValues: ["空白", "含讀寫動作", "MVC CRUD", "REST API"]));
+            parameters.Add(new ParameterDefinition("model", "模型", ParameterValueKind.Text, isAdvanced: true));
+            parameters.Add(new ParameterDefinition("dataContext", "DbContext", ParameterValueKind.Text, isAdvanced: true));
+        }
+        else if (feature.Category == "efcore")
+        {
+            parameters.Add(new ParameterDefinition("connection", "具名連線或來源", ParameterValueKind.Secret, isAdvanced: true));
+            parameters.Add(new ParameterDefinition("dbContext", "DbContext", ParameterValueKind.Text, isAdvanced: true));
+        }
+
+        return new CatalogFeature(
+            feature.Id,
+            feature.DisplayName,
+            FeatureGroup.Custom,
+            feature.CommandKind,
+            [feature.ShortName],
+            feature.Risk,
+            parameters: parameters,
+            constraints: constraints);
+    }
 
     private void RefreshVisibleFeatures()
     {

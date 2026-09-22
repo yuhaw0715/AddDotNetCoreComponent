@@ -179,7 +179,10 @@
 
           <Border Grid.Row="1" Margin="0,20,0,0" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="20">
             <StackPanel Spacing="14">
-              <TextBlock Text="{DynamicResource ParameterSettings}" FontSize="16" FontWeight="Bold" />
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{DynamicResource ParameterSettings}" FontSize="16" FontWeight="Bold" />
+                <CheckBox Grid.Column="1" Content="{DynamicResource ShowAdvancedOptions}" IsChecked="{Binding ParameterEditor.ShowAdvanced}" />
+              </Grid>
 
               <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
                 <StackPanel Spacing="6">
@@ -192,38 +195,32 @@
                     </ComboBox.ItemTemplate>
                   </ComboBox>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="6">
-                  <TextBlock Text="範本模式" FontSize="12" FontWeight="SemiBold" />
-                  <ComboBox ItemsSource="{Binding TemplateModes}" SelectedItem="{Binding SelectedTemplateMode}" />
-                </StackPanel>
               </Grid>
 
-              <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
-                <StackPanel Spacing="6">
-                  <TextBlock Text="名稱" FontSize="12" FontWeight="SemiBold" />
-                  <TextBox Text="{Binding ComponentName}" PlaceholderText="例如 OrdersController" />
-                  <TextBlock Text="{Binding ValidationMessage}" Foreground="#D92D20" FontSize="11" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="6">
-                  <TextBlock Text="輸出位置" FontSize="12" FontWeight="SemiBold" />
-                  <TextBox Text="{Binding OutputPath}" PlaceholderText="Controllers" />
-                </StackPanel>
-              </Grid>
-
-              <Border Background="#F9FAFB" CornerRadius="8" Padding="12">
-                <StackPanel Orientation="Horizontal" Spacing="24">
-                  <CheckBox IsChecked="{Binding UseAsyncActions}" Content="產生非同步動作" />
-                  <CheckBox IsChecked="{Binding IncludeApiActions}" Content="使用 REST API 模式" />
-                </StackPanel>
-              </Border>
-
-              <Expander Header="進階選項">
-                <StackPanel Margin="0,10,0,0" Spacing="8">
-                  <CheckBox Content="覆寫既有檔案（Demo 不會實際覆寫）" />
-                  <CheckBox Content="略過建置 --no-build" />
-                  <TextBox PlaceholderText="自訂命名空間（選填）" />
-                </StackPanel>
-              </Expander>
+              <ItemsControl ItemsSource="{Binding ParameterEditor.VisibleFields}">
+                <ItemsControl.DataTemplates>
+                  <DataTemplate DataType="vm:TextParameterFieldViewModel">
+                    <StackPanel Spacing="5" Margin="0,0,0,10">
+                      <TextBlock Text="{Binding Definition.DisplayName}" FontSize="12" FontWeight="SemiBold" />
+                      <TextBox Text="{Binding TextValue, UpdateSourceTrigger=PropertyChanged}" PasswordChar="{Binding PasswordChar}" PlaceholderText="{DynamicResource ParameterValuePlaceholder}" />
+                      <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#D92D20" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DataTemplate>
+                  <DataTemplate DataType="vm:EnumerationParameterFieldViewModel">
+                    <StackPanel Spacing="5" Margin="0,0,0,10">
+                      <TextBlock Text="{Binding Definition.DisplayName}" FontSize="12" FontWeight="SemiBold" />
+                      <ComboBox ItemsSource="{Binding AllowedValues}" SelectedItem="{Binding SelectedValue}" />
+                      <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#D92D20" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DataTemplate>
+                  <DataTemplate DataType="vm:BooleanParameterFieldViewModel">
+                    <StackPanel Spacing="5" Margin="0,0,0,10">
+                      <CheckBox Content="{Binding Definition.DisplayName}" IsChecked="{Binding IsChecked}" />
+                      <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#D92D20" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.DataTemplates>
+              </ItemsControl>
             </StackPanel>
           </Border>
 
