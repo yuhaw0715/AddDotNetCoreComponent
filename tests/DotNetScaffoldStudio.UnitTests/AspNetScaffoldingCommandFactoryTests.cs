@@ -46,7 +46,10 @@ public sealed class AspNetScaffoldingCommandFactoryTests
             Assert.Equal(["aspnet-codegenerator", feature.ShortNames[0]], arguments[..2]);
             Assert.Equal("src/Api/Api.csproj", ValueAfter(arguments, "-p"));
             Assert.Equal($"Generated/{feature.Id}", ValueAfter(arguments, "--relativeFolderPath"));
-            Assert.Equal([$"Generated/{feature.Id}"], request.ExpectedOutputs);
+            string[] expectedOutputs = feature.Id == "controller"
+                ? [$"Generated/{feature.Id}", $"Generated/{feature.Id}/Orders.cs"]
+                : [$"Generated/{feature.Id}"];
+            Assert.Equal(expectedOutputs, request.ExpectedOutputs);
         }
 
         Assert.Equal(

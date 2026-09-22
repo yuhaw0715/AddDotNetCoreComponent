@@ -58,7 +58,7 @@ public sealed class DotNetNewCommandFactory(ParameterValidator validator) : IDot
             "dotnet",
             arguments,
             root,
-            FeatureRisk.Normal,
+            GetRisk(feature, state),
             modifiesWorkspace: true,
             expectedOutputs: expectedOutputs);
     }
@@ -130,4 +130,10 @@ public sealed class DotNetNewCommandFactory(ParameterValidator validator) : IDot
             ParameterValueKind.List => value.ListValue.Count == 0,
             _ => string.IsNullOrWhiteSpace(value.TextValue)
         };
+
+    private static FeatureRisk GetRisk(CatalogFeature feature, ParameterFormState state) =>
+        feature.Risk == FeatureRisk.Normal &&
+        state.GetValue("force").BooleanValue == true
+            ? FeatureRisk.FileOverwrite
+            : feature.Risk;
 }

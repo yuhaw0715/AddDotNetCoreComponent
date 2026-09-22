@@ -48,12 +48,12 @@ public sealed class AspNetScaffoldingCommandFactory(ParameterValidator validator
 
         var expectedOutputs = string.IsNullOrWhiteSpace(outputPath)
             ? Array.Empty<string>()
-            : [NormalizeWorkspaceRelativePath(root, outputPath)];
+            : GetExpectedOutputs(feature.Id, state, root, outputPath);
         return new CommandRequest(
             "dotnet",
             arguments,
             root,
-            feature.Risk,
+            GetRisk(feature, state),
             modifiesWorkspace: true,
             expectedOutputs: expectedOutputs);
     }
@@ -109,8 +109,15 @@ public sealed class AspNetScaffoldingCommandFactory(ParameterValidator validator
             "databaseProvider" => "--databaseProvider",
             "output" => "--relativeFolderPath",
             "files" => "--files",
+            "force" => "--force",
             _ => throw new InvalidOperationException($"不支援的 Scaffolding 參數：{definition.Id}")
         };
+
+        if (value.Kind == ParameterValueKind.Boolean)
+        {
+            arguments.Add(new CommandArgument(option));
+            return;
+        }
 
         arguments.Add(new CommandArgument(option));
         var argumentValue = value.Kind switch
@@ -147,6 +154,30 @@ public sealed class AspNetScaffoldingCommandFactory(ParameterValidator validator
 
         return relative;
     }
+
+    private static IReadOnlyList<string> GetExpectedOutputs(
+        string featureId,
+        ParameterFormState state,
+        string workspaceRoot,
+        string outputPath)
+    {
+        var output = NormalizeWorkspaceRelativePath(workspaceRoot, outputPath);
+        if (featureId != "controller")
+        {
+            return [output];
+        }
+
+        var name = GetValue(state, "name");
+        return string.IsNullOrWhiteSpace(name)
+            ? [output]
+            : [output, Path.Combine(output, $"{name}.cs")];
+    }
+
+    private static FeatureRisk GetRisk(CatalogFeature feature, ParameterFormState state) =>
+        feature.Risk == FeatureRisk.Normal &&
+        state.GetValue("force").BooleanValue == true
+            ? FeatureRisk.FileOverwrite
+            : feature.Risk;
 
     private static bool IsEmpty(ParameterValue value) =>
         value.Kind switch

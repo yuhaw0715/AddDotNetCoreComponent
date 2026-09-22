@@ -117,7 +117,8 @@ public static class OfficialFeatureCatalog
             parameters:
             [
                 new ParameterDefinition("name", "名稱", ParameterValueKind.Text),
-                new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true)
+                new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true),
+                new ParameterDefinition("force", "覆寫既有輸出", ParameterValueKind.Boolean, isAdvanced: true)
             ],
             dependencies: [DotNet10],
             constraints:
@@ -197,6 +198,7 @@ public static class OfficialFeatureCatalog
             parameters.Add(new ParameterDefinition("files", "Identity 檔案", ParameterValueKind.List, isAdvanced: true));
         }
 
+        parameters.Add(new ParameterDefinition("force", "覆寫既有輸出", ParameterValueKind.Boolean, isAdvanced: true));
         parameters.Add(new ParameterDefinition("output", "輸出位置", ParameterValueKind.Path, isAdvanced: true));
         return parameters;
     }
