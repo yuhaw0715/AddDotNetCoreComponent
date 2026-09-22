@@ -46,6 +46,15 @@ public interface IDependencyDiscovery
         CancellationToken cancellationToken);
 }
 
+public interface IDependencyPlanWorkflow
+{
+    Task<DependencyPlanExecutionResult> ExecuteAsync(
+        DependencyPlan plan,
+        DependencyPlanConfirmation? confirmation,
+        IProgress<CommandOutputLine>? progress,
+        CancellationToken cancellationToken);
+}
+
 public interface IDotNetTemplateDiscovery
 {
     Task<DotNetTemplateDiscoveryResult> DiscoverAsync(string workspaceRoot, CancellationToken cancellationToken);

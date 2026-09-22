@@ -28,6 +28,12 @@ public sealed partial class App : Avalonia.Application
             new DotNetEnvironmentDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<IDependencyDiscovery>(provider =>
             new DependencyDiscoveryService(provider.GetRequiredService<IDotNetEnvironmentDiscovery>()));
+        services.AddSingleton<DependencyPlanConfirmationPolicy>();
+        services.AddSingleton<IDependencyPlanWorkflow>(provider =>
+            new DependencyPlanWorkflow(
+                provider.GetRequiredService<ICommandExecutionWorkflow>(),
+                provider.GetRequiredService<IDependencyDiscovery>(),
+                provider.GetRequiredService<DependencyPlanConfirmationPolicy>()));
         services.AddSingleton<IDotNetTemplateDiscovery>(provider =>
             new DotNetTemplateDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<ICustomTemplateHelpDiscovery>(provider =>
