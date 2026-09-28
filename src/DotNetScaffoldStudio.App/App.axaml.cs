@@ -20,6 +20,9 @@ public sealed partial class App : Avalonia.Application
         services.AddSingleton<IDemoExecutionService, DemoExecutionService>();
         services.AddSingleton<IFileRevealService, FinderRevealService>();
         services.AddSingleton<IUiTextProvider, AvaloniaUiTextProvider>();
+        services.AddSingleton<IAtomicFileReplacer, AtomicFileReplacer>();
+        services.AddSingleton<ILocalSettingsStore>(provider =>
+            new LocalSettingsStore(fileReplacer: provider.GetRequiredService<IAtomicFileReplacer>()));
         services.AddSingleton<ICommandRunner, ProcessCommandRunner>();
         services.AddSingleton<CommandCoordinator>();
         services.AddSingleton<IGitStatusService>(provider =>
