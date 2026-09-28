@@ -2,6 +2,9 @@
   <PropertyGroup>
     <MacOsAppContentsPath>$(MacOsAppBundlePath)/Contents</MacOsAppContentsPath>
     <MacOsAppExecutablePath>$(MacOsAppContentsPath)/MacOS</MacOsAppExecutablePath>
+    <MacOsAppResourcesPath>$(MacOsAppContentsPath)/Resources</MacOsAppResourcesPath>
+    <MacOsReleaseMetadataPath>$(MacOsAppResourcesPath)/DotNetScaffoldStudio.Release.json</MacOsReleaseMetadataPath>
+    <MacOsReleaseVersion Condition="&apos;$(MacOsReleaseVersion)&apos; == &apos;&apos;">0.1.0-demo</MacOsReleaseVersion>
   </PropertyGroup>
 
   <Target Name="CreateSelfContainedMacOsAppBundle"
@@ -9,8 +12,19 @@
           Condition="&apos;$(RuntimeIdentifier)&apos; == &apos;osx-arm64&apos; Or &apos;$(RuntimeIdentifier)&apos; == &apos;osx-x64&apos;">
     <RemoveDir Directories="$(MacOsAppBundlePath)" />
     <MakeDir Directories="$(MacOsAppExecutablePath)" />
+    <MakeDir Directories="$(MacOsAppResourcesPath)" />
     <ItemGroup>
       <_MacOsPublishedFile Include="$(PublishDir)**/*" />
+      <_MacOsReleaseMetadataLine Include="{" />
+      <_MacOsReleaseMetadataLine Include="  &quot;application&quot;: &quot;DotNet Scaffold Studio&quot;," />
+      <_MacOsReleaseMetadataLine Include="  &quot;version&quot;: &quot;$(MacOsReleaseVersion)&quot;," />
+      <_MacOsReleaseMetadataLine Include="  &quot;runtimeIdentifier&quot;: &quot;$(RuntimeIdentifier)&quot;," />
+      <_MacOsReleaseMetadataLine Include="  &quot;signed&quot;: false," />
+      <_MacOsReleaseMetadataLine Include="  &quot;codeSignature&quot;: &quot;adhoc (not Developer ID)&quot;," />
+      <_MacOsReleaseMetadataLine Include="  &quot;developerIdSigned&quot;: false," />
+      <_MacOsReleaseMetadataLine Include="  &quot;notarized&quot;: false," />
+      <_MacOsReleaseMetadataLine Include="  &quot;distribution&quot;: &quot;development&quot;" />
+      <_MacOsReleaseMetadataLine Include="}" />
     </ItemGroup>
     <Copy SourceFiles="@(_MacOsPublishedFile)"
           DestinationFiles="@(_MacOsPublishedFile-&gt;&apos;$(MacOsAppExecutablePath)/%(RecursiveDir)%(Filename)%(Extension)&apos;)"
@@ -18,5 +32,8 @@
     <Copy SourceFiles="$(MSBuildProjectDirectory)/../../packaging/macos/Info.plist"
           DestinationFiles="$(MacOsAppContentsPath)/Info.plist"
           SkipUnchangedFiles="true" />
+    <WriteLinesToFile File="$(MacOsReleaseMetadataPath)"
+                      Lines="@(_MacOsReleaseMetadataLine)"
+                      Overwrite="true" />
   </Target>
 </Project>

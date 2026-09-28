@@ -77,5 +77,5 @@
 - [x] 9.3 建立主要 UI smoke suite，涵蓋啟動、工作區、導航、參數錯誤、確認、執行結果與設定損壞復原，並以 headless/支援的 macOS 測試命令驗證通過。
 - [x] 9.4 建立 `osx-arm64` 與 `osx-x64` self-contained `.app` 發布設定，並以 `dotnet publish` 及 bundle 結構檢查驗證兩個成品不依賴另裝 Runtime。
 - [x] 9.5 在相容的 macOS 執行 arm64/x64 對應啟動驗收，驗證缺少 .NET SDK 時應用程式仍可啟動並顯示受限狀態。
-- [ ] 9.6 建立發布成品資訊，清楚標示版本、RID、未簽章及未公證，並以成品檢查驗證未誤產生 DMG、簽章或 Homebrew Cask。
+- [x] 9.6 建立發布成品資訊，清楚標示版本、RID、未簽章及未公證，並以成品檢查驗證未誤產生 DMG、簽章或 Homebrew Cask。
 - [ ] 9.7 執行完整 build、unit/integration/UI tests、OpenSpec strict validation 與隱私/機密掃描，只有全部通過後才將此 change 標記為可封存。
