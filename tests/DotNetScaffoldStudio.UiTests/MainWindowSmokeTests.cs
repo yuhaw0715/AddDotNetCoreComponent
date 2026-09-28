@@ -25,6 +25,18 @@ public sealed class MainWindowSmokeTests
     }
 
     [Fact]
+    public void AvaloniaUiTextProvider_ReadsMergedTraditionalChineseResources()
+    {
+        var app = new global::DotNetScaffoldStudio.App.App();
+        app.Initialize();
+        var text = new AvaloniaUiTextProvider(app);
+
+        Assert.Equal("已載入示範工作區 · 2 個專案", text.Get("Status.DemoWorkspaceLoaded"));
+        Assert.Equal("2 項功能", text.Format("Feature.Count", 2));
+        Assert.Equal("選擇 .NET 工作區", text.Get("ChooseWorkspaceDialogTitle"));
+    }
+
+    [Fact]
     public void WorkspaceAndNavigation_PreserveTargetAcrossEveryPrimaryPage()
     {
         var viewModel = CreateViewModel(new FakeExecutionService());

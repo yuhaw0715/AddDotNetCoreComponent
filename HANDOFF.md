@@ -247,6 +247,16 @@ OpenSpec 7.7 完成後的驗證結果：
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 
+## 9.9 繁中資源查找修正（2026-09-28）
+
+- `AvaloniaUiTextProvider` 改以遞迴查找 Avalonia 合併資源字典，修正 `Status.*`、`Feature.*`、`Parameter.*`、`Result.*` 與 `Template.*` 鍵直接顯示在 UI 的問題。
+- 資料夾選擇對話框標題也改用同一套資源提供器，避免固定文字繞過資源層。
+- 新增 UI 測試驗證合併繁中資源、格式化功能數量與對話框標題。
+- Build：0 警告、0 錯誤。
+- Test：151 項通過（Integration 44、UI 27、Unit 80）。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+
 使用下列命令重新驗證；Avalonia 遙測 opt-out 不可省略：
 
 ```bash
