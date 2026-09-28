@@ -351,10 +351,26 @@
             </Border>
 
             <Border IsVisible="{Binding IsHistoryPage}" Background="White" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="22">
-              <StackPanel Spacing="8">
+              <StackPanel Spacing="10">
                 <TextBlock Text="{DynamicResource HistoryPageHeading}" FontSize="18" FontWeight="Bold" />
                 <TextBlock Text="{DynamicResource HistoryPageDescription}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
-                <TextBlock Text="{DynamicResource NoExecutionHistory}" Foreground="{DynamicResource MutedBrush}" Margin="0,10,0,0" />
+                <TextBlock Text="{DynamicResource NoExecutionHistory}" IsVisible="{Binding HasExecutionHistory, Converter={x:Static BoolConverters.Not}}" Foreground="{DynamicResource MutedBrush}" Margin="0,10,0,0" />
+                <ScrollViewer IsVisible="{Binding HasExecutionHistory}" MaxHeight="520">
+                  <ItemsControl ItemsSource="{Binding ExecutionHistory}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                          <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Feature}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding MaskedCommand}" FontFamily="Menlo" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding WorkingDirectory}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding ResultSummary}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
               </StackPanel>
             </Border>
 

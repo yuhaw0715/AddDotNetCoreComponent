@@ -12,6 +12,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly ParameterValidator _parameterValidator;
     private readonly IFileRevealService _fileRevealService;
     private readonly IUiTextProvider _text;
+    private readonly IExecutionHistory _executionHistory;
     private CancellationTokenSource? _executionCancellation;
     private NavigationItem? _selectedNavigation;
     private FeatureDefinition? _selectedFeature;
@@ -36,7 +37,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _gitDifferenceSummary = string.Empty;
 
     public MainWindowViewModel(IWorkspaceService workspaceService, IDemoExecutionService executionService)
-        : this(workspaceService, executionService, new ParameterValidator(), new DemoFileRevealService(), new DefaultUiTextProvider())
+        : this(workspaceService, executionService, new ParameterValidator(), new DemoFileRevealService(), new DefaultUiTextProvider(), null)
     {
     }
 
@@ -44,7 +45,7 @@ public sealed class MainWindowViewModel : ObservableObject
         IWorkspaceService workspaceService,
         IDemoExecutionService executionService,
         ParameterValidator parameterValidator)
-        : this(workspaceService, executionService, parameterValidator, new DemoFileRevealService(), new DefaultUiTextProvider())
+        : this(workspaceService, executionService, parameterValidator, new DemoFileRevealService(), new DefaultUiTextProvider(), null)
     {
     }
 
@@ -53,7 +54,7 @@ public sealed class MainWindowViewModel : ObservableObject
         IDemoExecutionService executionService,
         ParameterValidator parameterValidator,
         IFileRevealService fileRevealService)
-        : this(workspaceService, executionService, parameterValidator, fileRevealService, new DefaultUiTextProvider())
+        : this(workspaceService, executionService, parameterValidator, fileRevealService, new DefaultUiTextProvider(), null)
     {
     }
 
@@ -62,13 +63,15 @@ public sealed class MainWindowViewModel : ObservableObject
         IDemoExecutionService executionService,
         ParameterValidator parameterValidator,
         IFileRevealService fileRevealService,
-        IUiTextProvider text)
+        IUiTextProvider text,
+        IExecutionHistory? executionHistory)
     {
         _workspaceService = workspaceService;
         _executionService = executionService;
         _parameterValidator = parameterValidator;
         _fileRevealService = fileRevealService;
         _text = text;
+        _executionHistory = executionHistory ?? new SessionExecutionHistory();
         _workspacePath = _text.Get("Status.WorkspacePlaceholder");
         _statusMessage = _text.Get("Status.DemoSafe");
         _executionOutput = _text.Get("Status.ExecutionOutputEmpty");
@@ -100,6 +103,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<ProjectInfo> Projects { get; } = [];
     public ObservableCollection<string> ResultFiles { get; } = [];
     public ObservableCollection<string> ExistingChanges { get; } = [];
+    public IReadOnlyList<ExecutionHistoryEntry> ExecutionHistory => _executionHistory.Entries;
     public IReadOnlyList<string> TemplateModes =>
     [
         _text.Get("Template.Empty"),
@@ -441,6 +445,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool RequiresProjectSelection => IsMultipleProjects && SelectedProject is null;
     public bool RequiresTargetProject => SelectedFeature?.Category is "scaffolding" or "efcore";
     public bool HasVisibleFeatures => VisibleFeatures.Count > 0;
+    public bool HasExecutionHistory => ExecutionHistory.Count > 0;
     public bool CanExecuteSelectedFeature =>
         SelectedFeature?.Availability == FeatureAvailability.Available &&
         (!RequiresTargetProject || SelectedProject is not null);
@@ -602,6 +607,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ExecutionOutput = string.Empty;
         StatusMessage = _text.Get("Status.DemoExecuting");
         _executionCancellation = new CancellationTokenSource();
+        var startedAt = DateTimeOffset.UtcNow;
         var progress = new Progress<string>(line => ExecutionOutput += $"{line}{Environment.NewLine}");
 
         try
@@ -631,6 +637,7 @@ public sealed class MainWindowViewModel : ObservableObject
             HasResult = true;
             ExecutionStage = result.Succeeded ? ExecutionStage.Succeeded : ExecutionStage.Failed;
             StatusMessage = result.Succeeded ? _text.Get("Status.DemoCompleted") : _text.Get("Status.DemoFailed");
+            RecordDemoHistory(command, startedAt, DateTimeOffset.UtcNow, result.Succeeded ? 0 : 1, false, result.Summary, result.Output);
         }
         catch (OperationCanceledException)
         {
@@ -642,6 +649,7 @@ public sealed class MainWindowViewModel : ObservableObject
             HasResult = true;
             ExecutionStage = ExecutionStage.Cancelled;
             StatusMessage = _text.Get("Status.Cancelled");
+            RecordDemoHistory(command, startedAt, DateTimeOffset.UtcNow, null, true, ResultSummary, []);
         }
         finally
         {
@@ -652,6 +660,32 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     private void CancelExecution() => _executionCancellation?.Cancel();
+
+    private void RecordDemoHistory(
+        CommandPreview command,
+        DateTimeOffset startedAt,
+        DateTimeOffset completedAt,
+        int? exitCode,
+        bool wasCancelled,
+        string resultSummary,
+        IReadOnlyList<string> output)
+    {
+        var outputLines = output
+            .Select(line => new CommandOutputLine(CommandOutputStream.StandardOutput, line))
+            .ToArray();
+        _executionHistory.RecordPreview(
+            SelectedFeature?.DisplayName ?? _text.Get("Feature.Select"),
+            command.DisplayText,
+            command.WorkingDirectory,
+            startedAt,
+            completedAt,
+            exitCode,
+            wasCancelled,
+            resultSummary,
+            outputLines);
+        OnPropertyChanged(nameof(ExecutionHistory));
+        OnPropertyChanged(nameof(HasExecutionHistory));
+    }
 
     private void ToggleNavigation() => IsNavigationCollapsed = !IsNavigationCollapsed;
 

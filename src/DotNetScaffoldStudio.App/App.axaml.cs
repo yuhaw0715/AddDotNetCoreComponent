@@ -29,6 +29,7 @@ public sealed partial class App : Avalonia.Application
         services.AddSingleton<IGitStatusService>(provider =>
             new GitStatusService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<IFileSnapshotService, FileSnapshotService>();
+        services.AddSingleton<IExecutionHistory, SessionExecutionHistory>();
         services.AddSingleton<ICommandExecutionWorkflow, CommandExecutionWorkflow>();
         services.AddSingleton<IDotNetEnvironmentDiscovery>(provider =>
             new DotNetEnvironmentDiscoveryService(provider.GetRequiredService<ICommandRunner>()));

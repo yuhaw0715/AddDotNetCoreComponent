@@ -5,7 +5,8 @@ namespace DotNetScaffoldStudio.Application;
 public sealed class CommandExecutionWorkflow(
     CommandCoordinator coordinator,
     IGitStatusService gitStatusService,
-    IFileSnapshotService fileSnapshotService) : ICommandExecutionWorkflow
+    IFileSnapshotService fileSnapshotService,
+    IExecutionHistory? executionHistory = null) : ICommandExecutionWorkflow
 {
     private readonly SemaphoreSlim _mutationWorkflowSlot = new(1, 1);
 
@@ -18,6 +19,7 @@ public sealed class CommandExecutionWorkflow(
         if (!request.ModifiesWorkspace)
         {
             var readOnlyResult = await coordinator.ExecuteAsync(request, progress, cancellationToken);
+            executionHistory?.Record(request, new CommandExecutionResult(readOnlyResult, null));
             return new CommandExecutionResult(readOnlyResult, null);
         }
 
@@ -34,7 +36,9 @@ public sealed class CommandExecutionWorkflow(
             var afterGit = await gitStatusService.GetStatusAsync(workspaceRoot, CancellationToken.None);
             var fileChanges = fileSnapshotService.Compare(beforeFiles, afterFiles);
             var differences = ExecutionDifferenceAggregator.Create(beforeGit, afterGit, fileChanges);
-            return new CommandExecutionResult(command, differences);
+            var execution = new CommandExecutionResult(command, differences);
+            executionHistory?.Record(request, execution);
+            return execution;
         }
         finally
         {
