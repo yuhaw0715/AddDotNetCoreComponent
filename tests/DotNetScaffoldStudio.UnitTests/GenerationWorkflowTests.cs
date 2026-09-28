@@ -83,6 +83,28 @@ public sealed class GenerationWorkflowTests
         Assert.Equal(1, execution.InvocationCount);
     }
 
+    [Fact]
+    public async Task FailedCommand_ReturnsFailedStateWithoutClaimingSuccess()
+    {
+        var feature = OfficialFeatureCatalog.DotNetNew.Single(item => item.Id == "webapi");
+        var request = new CommandRequest("dotnet", [new CommandArgument("new")], WorkspaceRoot, FeatureRisk.Normal, true);
+        var execution = new RecordingExecutionWorkflow(exitCode: 17);
+        var workflow = CreateWorkflow(execution, new FixtureDependencyDiscovery(EnvironmentDetectionStatus.Available));
+
+        var plan = await workflow.CreatePlanAsync(
+            feature,
+            request,
+            WorkspaceRoot,
+            ProjectPath,
+            [],
+            CancellationToken.None);
+        var result = await workflow.ExecuteAsync(plan, null, null, CancellationToken.None);
+
+        Assert.Equal(GenerationExecutionStatus.Failed, result.Status);
+        Assert.False(result.Succeeded);
+        Assert.Equal(1, execution.InvocationCount);
+    }
+
     private static GenerationWorkflow CreateWorkflow(
         RecordingExecutionWorkflow execution,
         FixtureDependencyDiscovery discovery) =>
@@ -122,7 +144,7 @@ public sealed class GenerationWorkflowTests
             TargetValidationResult.Valid;
     }
 
-    private sealed class RecordingExecutionWorkflow(bool throwCancellation = false) : ICommandExecutionWorkflow
+    private sealed class RecordingExecutionWorkflow(bool throwCancellation = false, int exitCode = 0) : ICommandExecutionWorkflow
     {
         public int InvocationCount { get; private set; }
 
@@ -140,7 +162,7 @@ public sealed class GenerationWorkflowTests
 
             var now = DateTimeOffset.UtcNow;
             return Task.FromResult(new CommandExecutionResult(
-                new CommandResult(0, now, now, [], []),
+                new CommandResult(exitCode, now, now, [], []),
                 new ExecutionDifferenceSummary([], [], [])));
         }
     }
