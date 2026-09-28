@@ -7,7 +7,7 @@
 ## 目前實作基準
 
 - Solution 已建立為 `DotNetScaffoldStudio.slnx`，使用 `net10.0`、Avalonia 12.1.1、CommunityToolkit.Mvvm 8.4.2 與集中套件版本管理。
-- OpenSpec change 為 `build-dotnet-scaffold-studio`；目前進度以 `openspec/changes/build-dotnet-scaffold-studio/tasks.md` 為準，不可只依賴本文件或 `HANDOFF.md` 的數字。
+- OpenSpec change 為 `build-dotnet-scaffold-studio`；55/55 tasks 已完成，實際狀態仍以 `openspec/changes/build-dotnet-scaffold-studio/tasks.md` 與 `openspec instructions apply --change build-dotnet-scaffold-studio --json` 為準，不可只依賴本文件或 `HANDOFF.md` 的數字。
 - 已完成工程基礎、官方功能目錄、安全命令核心，以及工作區/Git/檔案差異基礎；最新交接狀態與下一步見 `HANDOFF.md`。
 - OpenSpec 3.4 已完成：正式命令工作流程會在執行前後擷取 Git/檔案狀態；取消時嘗試正常終止程序，必要時終止程序樹，並在取消後重新掃描以回報部分輸出差異。
 - OpenSpec 5.1 已完成：`IDotNetEnvironmentDiscovery` 透過 `CommandRequest` 與 `ProcessCommandRunner` 探索 .NET SDK、Runtime、工作負載及工作區本機工具；這是唯讀服務，不安裝全域工具。
@@ -16,22 +16,25 @@
 - OpenSpec 5.4 已完成：`IDependencyDiscovery` 重用唯讀環境探索結果，偵測本機 `dotnet-ef`、`dotnet-aspnet-codegenerator` 與目標 `.csproj`／中央套件版本，區分缺少、偵測失敗與主要版本不相容。
 - OpenSpec 5.5 已完成：`DependencyPlanWorkflow` 以一次性計畫確認 token 執行結構化相依性步驟，逐步重驗證並保留部分成功、失敗與 Git／檔案差異。
 - OpenSpec 5.6 已完成：`LocalToolInstallationService` 先建立工作區 `.config/dotnet-tools.json`，再以 `--local` 安裝或更新工具；隔離整合測試驗證 executable、檔案差異、重驗證與無 `--global` 命令。
-- OpenSpec 5.7 已完成：`NuGetPackageInstallationService` 僅針對選定 `.csproj` 建立 `dotnet add package --no-restore` 與 `dotnet restore` 兩階段計畫，逐步重驗證並在 restore 失敗時保留專案檔差異與錯誤階段。下一個待辦是 5.8，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 5.8 已完成：`DependencyGuidanceService` 對缺少 SDK 提供官方說明、對缺少工作負載要求獨立確認，`WorkloadInstallationWorkflow` 在確認前不呼叫 adapter；fake adapter 單元測試驗證未確認時不啟動任何網路或修改操作。下一個待辦是 6.1，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 6.1 已完成：`ParameterFormState` 依 schema 建立布林、列舉、路徑、清單、一般文字與機密欄位的 typed value，常用/進階切換只改變可見性且保留所有值。下一個待辦是 6.2，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 5.7 已完成：`NuGetPackageInstallationService` 僅針對選定 `.csproj` 建立 `dotnet add package --no-restore` 與 `dotnet restore` 兩階段計畫，逐步重驗證並在 restore 失敗時保留專案檔差異與錯誤階段。
+- OpenSpec 5.8 已完成：`DependencyGuidanceService` 對缺少 SDK 提供官方說明、對缺少工作負載要求獨立確認，`WorkloadInstallationWorkflow` 在確認前不呼叫 adapter；fake adapter 單元測試驗證未確認時不啟動任何網路或修改操作。
+- OpenSpec 6.1 已完成：`ParameterFormState` 依 schema 建立布林、列舉、路徑、清單、一般文字與機密欄位的 typed value，常用/進階切換只改變可見性且保留所有值。
 - OpenSpec 6.2 已完成：`ParameterValidator` 依功能 schema 驗證必填、名稱、工作區路徑、條件式必填與互斥欄位，回傳帶欄位識別字的繁中錯誤且不輸出機密值。
-- OpenSpec 6.3 已完成：`DotNetNewCommandFactory` 依官方 46 個範本 schema 建立結構化 `dotnet new` 命令，固定使用 canonical short name、工作區工作目錄與相對輸出目標，並在建立前執行參數驗證。下一個待辦是 6.4，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 6.4 已完成：`AspNetScaffoldingCommandFactory` 支援八種 generator，將模式、`-p` 目標專案、名稱、模型、DbContext、資料庫提供者、Identity 檔案與輸出位置建立為結構化引數，並在建立前驗證工作區邊界。下一個待辦是 6.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 6.5 已完成：`EfCoreCommandFactory` 支援目錄內 12 個 EF Core 命令，將位置引數、專案、DbContext、連線與輸出轉為結構化引數；`database update` 產生不含原始連線值的二次確認資料，並明確拒絕 `database drop`。下一個待辦是 6.6，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 6.6 已完成：命令工廠列出預期輸出，`ExpectedOutputConflictChecker` 在既有 Controller 或輸出目錄時預設阻擋；明確 `force` 會升為檔案覆寫風險並要求確認。下一個待辦是 6.7，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 6.3 已完成：`DotNetNewCommandFactory` 依官方 46 個範本 schema 建立結構化 `dotnet new` 命令，固定使用 canonical short name、工作區工作目錄與相對輸出目標，並在建立前執行參數驗證。
+- OpenSpec 6.4 已完成：`AspNetScaffoldingCommandFactory` 支援八種 generator，將模式、`-p` 目標專案、名稱、模型、DbContext、資料庫提供者、Identity 檔案與輸出位置建立為結構化引數，並在建立前驗證工作區邊界。
+- OpenSpec 6.5 已完成：`EfCoreCommandFactory` 支援目錄內 12 個 EF Core 命令，將位置引數、專案、DbContext、連線與輸出轉為結構化引數；`database update` 產生不含原始連線值的二次確認資料，並明確拒絕 `database drop`。
+- OpenSpec 6.6 已完成：命令工廠列出預期輸出，`ExpectedOutputConflictChecker` 在既有 Controller 或輸出目錄時預設阻擋；明確 `force` 會升為檔案覆寫風險並要求確認。
 - OpenSpec 6.7 已完成：`GenerationWorkflow` 整合目標專案重驗證、相依性探索、輸出衝突、一次性確認、可取消執行與結果差異；隔離暫存專案測試完成 Controller、Razor Page 與 EF Migration 案例。
-- OpenSpec 7.1 已完成：Avalonia 主視窗提供可收合左側導覽、功能群組內容區，以及首頁/工作區、歷程與設定頁；UI ViewModel 測試驗證八組導航與切換時保留工作區/目標專案。下一個待辦是 7.2，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 7.2 已完成：首頁支援工作區掃描結果與目標專案選擇，空工作區仍可使用專案範本，單一專案自動選取，多專案與 Scaffolding/EF Core 功能要求明確目標；掃描失敗不會覆蓋既有工作區狀態。下一個待辦是 7.3，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 7.3 已完成：功能清單支援依名稱、短名稱、描述與相依性搜尋，卡片呈現相依性、可用性、風險與平台限制；WPF/WinForms 在 macOS 可瀏覽但無法執行。下一個待辦是 7.4，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 7.4 已完成：`ParameterEditorViewModel` 依 schema 建立 typed 文字、列舉、布林與機密欄位，支援進階欄位切換、欄位級驗證、即時命令預覽與 Secret 遮罩。下一個待辦是 7.5，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 7.5 已完成：確認流程依一般、檔案覆寫、本機工具安裝與 `database update` 分類，顯示相應風險與安全範圍；取消確認只關閉對話框，不呼叫 Demo 執行服務。下一個待辦是 7.6，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 7.6 已完成：Avalonia Demo 顯示執行階段、即時輸出、成功/失敗/取消、執行前既有與執行後檔案差異、Git 摘要，並以結構化 `open -R` Finder adapter 提供輸出位置動作。下一個待辦是 7.7，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
-- OpenSpec 7.7 已完成：固定 UI、ViewModel 狀態與 Demo/Finder 回饋文字均由可替換的繁體中文資源提供，互動控制項補上可存取名稱與鍵盤焦點順序，狀態同時以文字呈現；資源掃描、鍵盤標記測試與完整測試均通過。下一個待辦是 8.1，仍以 `tasks.md` 和最新 `openspec instructions apply` 結果為準。
+- OpenSpec 7.1 已完成：Avalonia 主視窗提供可收合左側導覽、功能群組內容區，以及首頁/工作區、歷程與設定頁；UI ViewModel 測試驗證八組導航與切換時保留工作區/目標專案。
+- OpenSpec 7.2 已完成：首頁支援工作區掃描結果與目標專案選擇，空工作區仍可使用專案範本，單一專案自動選取，多專案與 Scaffolding/EF Core 功能要求明確目標；掃描失敗不會覆蓋既有工作區狀態。
+- OpenSpec 7.3 已完成：功能清單支援依名稱、短名稱、描述與相依性搜尋，卡片呈現相依性、可用性、風險與平台限制；WPF/WinForms 在 macOS 可瀏覽但無法執行。
+- OpenSpec 7.4 已完成：`ParameterEditorViewModel` 依 schema 建立 typed 文字、列舉、布林與機密欄位，支援進階欄位切換、欄位級驗證、即時命令預覽與 Secret 遮罩。
+- OpenSpec 7.5 已完成：確認流程依一般、檔案覆寫、本機工具安裝與 `database update` 分類，顯示相應風險與安全範圍；取消確認只關閉對話框，不呼叫 Demo 執行服務。
+- OpenSpec 7.6 已完成：Avalonia Demo 顯示執行階段、即時輸出、成功/失敗/取消、執行前既有與執行後檔案差異、Git 摘要，並以結構化 `open -R` Finder adapter 提供輸出位置動作。
+- OpenSpec 7.7 已完成：固定 UI、ViewModel 狀態與 Demo/Finder 回饋文字均由可替換的繁體中文資源提供，互動控制項補上可存取名稱與鍵盤焦點順序，狀態同時以文字呈現；資源掃描、鍵盤標記測試與完整測試均通過。
+- OpenSpec 8.1–9.7 已完成：本機設定、重啟恢復、工作階段歷程、網路授權邊界、coverage、CLI 隔離、自包含 macOS 雙架構發布、啟動受限狀態與隱私稽核均已實作並驗證；OpenSpec change 共 55/55 tasks 完成。
+- 9.7 後修正已完成：macOS `CVDisplayLink` 等待避免 `RenderTimer -6661` 啟動崩潰；主視窗先顯示再於背景載入設定與環境；Avalonia 合併資源字典改為遞迴查找，畫面不再顯示 `Status.*`、`Feature.*` 等資源鍵。
+- 最新功能修正基準為 `e2526af`（`修正繁中資源顯示`）；交接文件更新可能產生較新的文件 commit，接手時仍須實際確認 `main` 與 `origin/main`。
 - `src/DotNetScaffoldStudio.Application/DemoCatalog.cs` 是 UI 示意資料；完整的 .NET 10、Scaffolding 與 EF Core 基準位於 `OfficialFeatureCatalog.cs`。兩者尚未整合，不得把 Demo 子集合誤認為正式目錄。
 - 目前 Avalonia UI 的執行按鈕只呼叫 `DemoExecutionService`。它不會啟動外部 CLI、修改工作區或連線資料庫；接上正式執行流程前必須保留清楚的 Demo 標示。
 - `artifacts/` 已由 Git 忽略；本機 `.app` 是可重建成品，不是原始碼交付的一部分。

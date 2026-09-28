@@ -5,10 +5,10 @@
 - 日期：2026-09-28（Asia/Taipei）
 - 儲存庫：`https://github.com/yuhaw0715/AddDotNetCoreComponent.git`
 - 分支：`main`
-- 目前已推送基準：`main` 與 `origin/main` 應於最近完成的 task commit 同步；實際 commit 以 `git log -1` 驗證。
+- 最新功能修正基準為 `e2526af`（`修正繁中資源顯示`）；交接文件更新可能產生較新的文件 commit，接手時仍應以 `git status`、`git log -1`、`git remote -v` 與目前分支實際驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
 OpenSpec 進度：55/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-本次 9.7 已完成完整驗證；此 change 的所有 task 均已完成，可進入封存流程。
+本次 OpenSpec 9.7、啟動修正與繁中資源修正均已完成驗證；此 change 的所有 task 均已完成，可進入封存流程。本文件不代表已執行封存。
 
 ## 產品與目前可操作成果
 
@@ -256,6 +256,16 @@ OpenSpec 7.7 完成後的驗證結果：
 - Test：151 項通過（Integration 44、UI 27、Unit 80）。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+- `git diff --check`：通過。
+
+## 9.10 macOS 手動 Demo 驗收（2026-09-28）
+
+- 已實際啟動 arm64 macOS App，主視窗可正常出現，繁體中文資源正確顯示，不再顯示 `Status.*`、`Feature.*`、`Parameter.*` 或 `Result.*` 等原始資源鍵。
+- 已驗證操作路徑：使用示範資料 → ASP.NET Scaffolding → 選擇 `Commerce.Api` → 輸入 `OrdersController` → 檢查命令預覽 → 執行示意 → 確認。
+- 成功結果正確顯示「示意流程已完成」與「成功」，並顯示模擬差異 `M Program.cs`、`A Controllers/OrdersController.cs`。
+- 已確認工作區選取、目標專案選取、參數驗證、進階選項、取消確認、清除結果與 Demo Safe Mode 行為符合預期。
+- 這是安全 Demo 驗收：不會執行外部 CLI、不會修改真實專案、不會連線資料庫；Finder 輸出動作在沒有真實輸出檔案時維持停用。
+- 最新功能修正已推送至 `origin/main`：`e2526af`（`修正繁中資源顯示`）；本次交接文件更新可能產生較新的文件 commit。
 
 使用下列命令重新驗證；Avalonia 遙測 opt-out 不可省略：
 
@@ -297,21 +307,23 @@ open "artifacts/DotNet Scaffold Studio.app"
 ## 可直接使用的交接 Prompt
 
 ```text
-請接手 /Users/yuhao/Projects/AddDotNetCoreComponent 的 DotNet Scaffold Studio 開發。
+請接手 `/Users/yuhao/Projects/AddDotNetCoreComponent` 的 DotNet Scaffold Studio 開發。
 
-先完整閱讀根目錄 AGENTS.md、HANDOFF.md，以及 openspec/changes/build-dotnet-scaffold-studio/ 下的 proposal.md、design.md、所有 specs 與 tasks.md。接著執行：
+開始前完整閱讀根目錄 `AGENTS.md`、`HANDOFF.md`，以及 `openspec/changes/build-dotnet-scaffold-studio/` 下的 `proposal.md`、`design.md`、所有 `specs/*/spec.md` 與 `tasks.md`。接著執行以下檢查命令：
 
+git status --short
+git log -1 --oneline
+git remote -v
+git branch --show-current
 openspec instructions apply --change build-dotnet-scaffold-studio --json
 
-以 CLI 輸出確認最新進度，不要只相信 HANDOFF.md 內的進度數字。
+以 CLI 輸出確認最新進度，不要只相信文件中的進度數字；保留工作樹既有變更，不要自動回復或覆蓋與目前任務無關的檔案。
 
-目前 `main` 與 `origin/main` 應已同步於最新 task commit；開始前仍須檢查 `git log -1` 與 `git status`，並保留任何既有變更。
+目前 OpenSpec `build-dotnet-scaffold-studio` 已完成 55/55 tasks，最新功能修正 commit 是 `e2526af 修正繁中資源顯示`；交接文件可能有較新的文件 commit，請以 Git 實際狀態為準。9.7 後的 macOS display-link 啟動防護、主視窗先顯示的背景初始化、以及 Avalonia 合併資源遞迴查找均已完成；不要重新實作，除非發現明確回歸問題。change 可封存，但除非我明確要求，不要自行執行封存。
 
-已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
+目前 UI 是可操作的安全 Demo：UI 使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI、不會修改真實工作區、不會連線資料庫。完整官方功能目錄仍在 `OfficialFeatureCatalog`；不要把 Demo 子集合或畫面上的模擬差異誤認為正式產生流程。若要把正式命令流程接到 UI，先確認新的 OpenSpec 範圍與規格，不要默默擴張產品行為。
 
-OpenSpec 9.7 已完成；所有 task 均已驗證並標記完成，change 可封存。所有 Avalonia 相關命令仍須設定 `AVALONIA_TELEMETRY_OPTOUT=1`。
+硬性規則：所有 Avalonia restore/build/test/publish 命令都要設定 `AVALONIA_TELEMETRY_OPTOUT=1`；外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 `sh`、`bash`、`zsh -c` 或其他 shell wrapper；不得提供 `database drop`、不得安裝全域 dotnet tool、不得碰觸真實專案/正式資料庫/使用者全域設定；測試使用隔離暫存目錄、`DOTNET_CLI_HOME` 與 NuGet 快取；固定使用者可見文字必須經由資源管理。
 
-所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
-
-完成變更後執行適用的 build、unit/integration/UI tests、`dotnet format`、OpenSpec strict validation 與 `git diff --check`。請用繁體中文回報。未取得我對該次操作的明確允許前，不得 commit 或 push。
+完成任何變更後，依風險執行適用的 build、unit/integration/UI tests、`dotnet format`、OpenSpec strict validation 與 `git diff --check`，並以繁體中文回報。未取得我對該次 commit/push 的明確允許前，不得 commit 或 push；若獲得允許，commit 訊息使用中文，push 前再次確認 remote、分支與欲推送的 commit。
 ```
