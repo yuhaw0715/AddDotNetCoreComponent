@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -14,7 +15,7 @@ public sealed partial class App : Avalonia.Application
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
-    public override async void OnFrameworkInitializationCompleted()
+    public override void OnFrameworkInitializationCompleted()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
@@ -67,33 +68,12 @@ public sealed partial class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settingsStore = _serviceProvider.GetRequiredService<ILocalSettingsStore>();
-            var loadedSettings = await LoadSettingsAsync(settingsStore);
             var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
-            viewModel.RestorePreferences(loadedSettings.Settings.Preferences);
-            await viewModel.LoadEnvironmentStatusAsync(
-                _serviceProvider.GetRequiredService<IDotNetEnvironmentDiscovery>(),
-                AppContext.BaseDirectory,
-                CancellationToken.None);
-
-            var settingsSession = new LocalSettingsSession(loadedSettings.Settings);
             var mainWindow = new MainWindow
             {
                 DataContext = viewModel
             };
-            mainWindow.ApplyWindowSettings(loadedSettings.Settings.Window);
-
-            var recentWorkspaceCount = settingsSession.RecentWorkspaces.Count;
-            await settingsSession.RestoreMostRecentWorkspaceAsync(
-                viewModel,
-                static path => Directory.Exists(path) || File.Exists(path),
-                CancellationToken.None);
-            if (settingsSession.RecentWorkspaces.Count != recentWorkspaceCount)
-            {
-                await settingsStore.SaveAsync(
-                    settingsSession.CreateDocument(viewModel.CapturePreferences(), mainWindow.CaptureWindowSettings()),
-                    CancellationToken.None);
-            }
-
+            var settingsSession = new LocalSettingsSession(LocalSettingsDocument.Default);
             var isClosing = false;
             mainWindow.Closing += async (_, eventArgs) =>
             {
@@ -117,7 +97,42 @@ public sealed partial class App : Avalonia.Application
                 }
             };
 
+            // 先交給 Avalonia 建立視窗，避免環境探索或設定檔 I/O 阻塞整個啟動流程。
             desktop.MainWindow = mainWindow;
+
+            _ = InitializeApplicationAsync();
+
+            async Task InitializeApplicationAsync()
+            {
+                try
+                {
+                    var loadedSettings = await LoadSettingsAsync(settingsStore);
+                    settingsSession = new LocalSettingsSession(loadedSettings.Settings);
+                    viewModel.RestorePreferences(loadedSettings.Settings.Preferences);
+                    mainWindow.ApplyWindowSettings(loadedSettings.Settings.Window);
+
+                    await viewModel.LoadEnvironmentStatusAsync(
+                        _serviceProvider.GetRequiredService<IDotNetEnvironmentDiscovery>(),
+                        AppContext.BaseDirectory,
+                        CancellationToken.None);
+
+                    var recentWorkspaceCount = settingsSession.RecentWorkspaces.Count;
+                    await settingsSession.RestoreMostRecentWorkspaceAsync(
+                        viewModel,
+                        static path => Directory.Exists(path) || File.Exists(path),
+                        CancellationToken.None);
+                    if (settingsSession.RecentWorkspaces.Count != recentWorkspaceCount)
+                    {
+                        await settingsStore.SaveAsync(
+                            settingsSession.CreateDocument(viewModel.CapturePreferences(), mainWindow.CaptureWindowSettings()),
+                            CancellationToken.None);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    Trace.TraceError("應用程式背景初始化失敗：{0}", exception);
+                }
+            }
         }
 
         base.OnFrameworkInitializationCompleted();

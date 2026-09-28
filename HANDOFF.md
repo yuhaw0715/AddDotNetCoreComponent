@@ -238,6 +238,15 @@ OpenSpec 7.7 完成後的驗證結果：
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
 
+## 9.8 主視窗啟動修正（2026-09-28）
+
+- `App.OnFrameworkInitializationCompleted` 先指定 `MainWindow` 給桌面生命週期，再以背景非同步流程載入本機設定、探索 .NET 環境與還原最近工作區，避免 Dock 已啟動但視窗被 I/O 或 CLI 探索阻塞。
+- 背景初始化失敗時保留已顯示的主視窗，並寫入診斷記錄；關閉流程仍使用目前設定工作階段保存設定。
+- Build：0 警告、0 錯誤。
+- Test：150 項通過（Integration 44、UI 26、Unit 80）。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+
 使用下列命令重新驗證；Avalonia 遙測 opt-out 不可省略：
 
 ```bash
