@@ -7,8 +7,8 @@
 - 分支：`main`
 - 目前已推送基準：`main` 與 `origin/main` 應於最近完成的 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-OpenSpec 進度：54/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-本次 9.6 已完成實作與驗證並準備交付；後續只剩 9.7，仍須獨立完成驗證後再交付。
+OpenSpec 進度：55/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+本次 9.7 已完成完整驗證；此 change 的所有 task 均已完成，可進入封存流程。
 
 ## 產品與目前可操作成果
 
@@ -65,6 +65,7 @@ OpenSpec 已勾選以下區段：
 - 9.4：新增 `osx-arm64`/`osx-x64` PublishProfile 與共用 MSBuild bundle target，固定 Release self-contained、保留完整 Runtime 檔案，並產生帶 `Contents/MacOS`、`Info.plist` 與 RID 名稱的 `.app` 成品。
 - 9.5：啟動時以唯讀 `IDotNetEnvironmentDiscovery` 探索 SDK；缺少或偵測失敗時主視窗仍可啟動，顯示繁中功能受限與 .NET 10 SDK 安裝指引，Demo 瀏覽不被阻擋。App/ViewModel/XAML smoke test 與 arm64/x64 隔離 HOME/PATH 實際啟動驗收均通過；x64 於本機透過 Rosetta 2 執行。
 - 9.6：發布 bundle 產生 `DotNetScaffoldStudio.Release.json`，標示版本 `0.1.0-demo`、RID、開發發行、未 Developer ID 簽章、未公證，並以成品檢查確認沒有 DMG/pkg 或 Homebrew Cask；apphost 的 ad hoc 簽章明確標示為非 Developer ID。
+- 9.7：完成完整 build、Integration/UI/Unit 測試、format、OpenSpec strict、diff check 與隱私/機密來源掃描；確認無直接網路/遙測 API、明文 credential pattern、shell wrapper 入口或超出第一版範圍的 DMG/pkg/Cask 成品，change 可封存。
 
 重要實作位置：
 
@@ -110,17 +111,13 @@ OpenSpec 已勾選以下區段：
 4. OpenSpec 5.1–5.8 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6/5.7 的本機工具與 NuGet 服務、5.8 的 guidance service 已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。
 5. OpenSpec 6.1–6.7 已完成 schema 表單狀態、欄位驗證、三類命令工廠、輸出衝突檢查與可取消產生流程；7.1–7.6 已建立桌面導覽、工作區狀態、功能搜尋、參數編輯、確認與結果差異骨架，但正式產生流程尚未接入 Avalonia UI。
 6. UI 是操作流程 Demo；正式產生流程尚未接入 Avalonia UI。7.7 已完成資源化、焦點順序與非顏色狀態提示；9.3 smoke suite 可在不需 windowing backend 的 headless-compatible 測試環境執行，但不等同於實體桌面互動驗收。
-7. OpenSpec 9.7 尚未完成，包含最終驗收與可封存狀態確認。
+7. OpenSpec 9.1–9.7 已完成；此 change 已通過最終驗收，可另行執行封存流程。
 8. 既有未含 RID 的 `.app` 仍是 Debug、framework-dependent 示意成品；9.4 的 Release self-contained 成品位於 `artifacts/DotNet Scaffold Studio-osx-arm64.app` 與 `artifacts/DotNet Scaffold Studio-osx-x64.app`，且 `artifacts/` 不納入版本控制。
 9. 不得提供 `database drop`，也不得加入任意 shell/終端機入口。
 
 ## 下一步建議順序
 
-接續 OpenSpec 9.7：
-
-1. 執行完整 build、unit/integration/UI tests、OpenSpec strict validation 與隱私/機密掃描。
-2. 全部通過後將 9.7 勾選，確認 change 可封存。
-3. 每完成一項即獨立 commit/push、更新 `tasks.md`，不要一次提前勾選整個區段。
+OpenSpec `build-dotnet-scaffold-studio` 的 55/55 tasks 已完成，change 可封存。若要進行正式收尾，請另行執行封存流程；本次不自動封存。
 
 ## 前次完整驗證（2026-09-22）
 
@@ -220,6 +217,15 @@ OpenSpec 7.7 完成後的驗證結果：
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
 
+## 最近一次完整驗證（2026-09-28；OpenSpec 9.7）
+
+- Build：0 警告、0 錯誤。
+- Test：148 項通過（Integration 44、UI 24、Unit 80）。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+- `git diff --check`：通過。
+- 隱私/機密掃描：production source 無直接 HTTP、socket 或遙測 API；未發現常見明文 credential pattern；外部程序未使用 shell wrapper；未產生 DMG/pkg/Homebrew Cask。
+
 使用下列命令重新驗證；Avalonia 遙測 opt-out 不可省略：
 
 ```bash
@@ -272,7 +278,7 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 9.7：執行完整 build、unit/integration/UI tests、OpenSpec strict validation 與隱私/機密掃描；只有全部通過後才勾選 9.7 並將 change 標記為可封存。
+OpenSpec 9.7 已完成；所有 task 均已驗證並標記完成，change 可封存。所有 Avalonia 相關命令仍須設定 `AVALONIA_TELEMETRY_OPTOUT=1`。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 
