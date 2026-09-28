@@ -56,7 +56,8 @@ public sealed record DependencyPlanExecutionResult(
 public sealed class DependencyPlanWorkflow(
     ICommandExecutionWorkflow executionWorkflow,
     IDependencyDiscovery dependencyDiscovery,
-    DependencyPlanConfirmationPolicy confirmationPolicy) : IDependencyPlanWorkflow
+    DependencyPlanConfirmationPolicy confirmationPolicy,
+    INetworkAccessAdapter? networkAccessAdapter = null) : IDependencyPlanWorkflow
 {
     public async Task<DependencyPlanExecutionResult> ExecuteAsync(
         DependencyPlan plan,
@@ -95,17 +96,34 @@ public sealed class DependencyPlanWorkflow(
             DependencyPlanStepResult stepResult;
             try
             {
-                var execution = await executionWorkflow.ExecuteAsync(
-                    plan.WorkspaceRoot,
-                    step.Request,
-                    progress,
-                    cancellationToken);
-                var revalidation = await dependencyDiscovery.DiscoverAsync(
-                    plan.WorkspaceRoot,
-                    plan.TargetProjectPath,
-                    [step.Dependency.Requirement],
-                    cancellationToken);
-                stepResult = CreateStepResult(step, execution, revalidation);
+                var networkDecision = step.RequiresNetwork && networkAccessAdapter is not null
+                    ? await networkAccessAdapter.AuthorizeAsync(
+                        new NetworkAccessRequest(step.Kind.ToString(), UserInitiated: true),
+                        cancellationToken)
+                    : null;
+                if (networkDecision is { IsAllowed: false })
+                {
+                    stepResult = new DependencyPlanStepResult(
+                        step,
+                        DependencyPlanStepStatus.Failed,
+                        null,
+                        null,
+                        networkDecision.Diagnostic);
+                }
+                else
+                {
+                    var execution = await executionWorkflow.ExecuteAsync(
+                        plan.WorkspaceRoot,
+                        step.Request,
+                        progress,
+                        cancellationToken);
+                    var revalidation = await dependencyDiscovery.DiscoverAsync(
+                        plan.WorkspaceRoot,
+                        plan.TargetProjectPath,
+                        [step.Dependency.Requirement],
+                        cancellationToken);
+                    stepResult = CreateStepResult(step, execution, revalidation);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

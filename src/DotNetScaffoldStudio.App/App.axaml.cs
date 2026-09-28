@@ -30,6 +30,7 @@ public sealed partial class App : Avalonia.Application
             new GitStatusService(provider.GetRequiredService<ICommandRunner>()));
         services.AddSingleton<IFileSnapshotService, FileSnapshotService>();
         services.AddSingleton<IExecutionHistory, SessionExecutionHistory>();
+        services.AddSingleton<INetworkAccessAdapter, UserInitiatedNetworkAccessAdapter>();
         services.AddSingleton<ICommandExecutionWorkflow, CommandExecutionWorkflow>();
         services.AddSingleton<IDotNetEnvironmentDiscovery>(provider =>
             new DotNetEnvironmentDiscoveryService(provider.GetRequiredService<ICommandRunner>()));
@@ -40,7 +41,8 @@ public sealed partial class App : Avalonia.Application
             new DependencyPlanWorkflow(
                 provider.GetRequiredService<ICommandExecutionWorkflow>(),
                 provider.GetRequiredService<IDependencyDiscovery>(),
-                provider.GetRequiredService<DependencyPlanConfirmationPolicy>()));
+                provider.GetRequiredService<DependencyPlanConfirmationPolicy>(),
+                provider.GetRequiredService<INetworkAccessAdapter>()));
         services.AddSingleton<ILocalToolInstallationService>(provider =>
             new LocalToolInstallationService(provider.GetRequiredService<IDependencyDiscovery>()));
         services.AddSingleton<INuGetPackageInstallationService>(provider =>

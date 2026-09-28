@@ -94,6 +94,36 @@ public sealed class DependencyPlanWorkflowTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_OnlyAuthorizesNetworkForConfirmedNetworkSteps()
+    {
+        var network = new RecordingNetworkAccessAdapter();
+        var plan = CreatePlan(1, requiresNetwork: false);
+        var execution = new FixtureExecutionWorkflow(_ => SuccessfulExecution());
+        var discovery = new FixtureDependencyDiscovery(_ => Available("tool-1"));
+        var policy = new DependencyPlanConfirmationPolicy();
+        var workflow = new DependencyPlanWorkflow(execution, discovery, policy, network);
+
+        var localResult = await workflow.ExecuteAsync(
+            plan,
+            policy.Issue(plan),
+            null,
+            CancellationToken.None);
+
+        Assert.Equal(DependencyPlanExecutionStatus.Succeeded, localResult.Status);
+        Assert.Equal(0, network.CallCount);
+
+        var networkPlan = CreatePlan(1, requiresNetwork: true);
+        var networkResult = await workflow.ExecuteAsync(
+            networkPlan,
+            policy.Issue(networkPlan),
+            null,
+            CancellationToken.None);
+
+        Assert.Equal(DependencyPlanExecutionStatus.Succeeded, networkResult.Status);
+        Assert.Equal(1, network.CallCount);
+    }
+
+    [Fact]
     public void ConfirmationPolicy_RejectsChangedPlanAndConsumesValidConfirmationOnce()
     {
         var firstPlan = CreatePlan(1);
@@ -106,7 +136,10 @@ public sealed class DependencyPlanWorkflowTests
         Assert.False(policy.ValidateAndConsume(firstPlan, confirmation));
     }
 
-    private static DependencyPlan CreatePlan(int count, string? expectedChange = null)
+    private static DependencyPlan CreatePlan(
+        int count,
+        string? expectedChange = null,
+        bool requiresNetwork = true)
     {
         var workspace = "/tmp/dependency-plan-workspace";
         var capabilities = Enumerable.Range(1, count)
@@ -126,7 +159,7 @@ public sealed class DependencyPlanWorkflowTests
                     workspace,
                     FeatureRisk.EnvironmentChange,
                     modifiesWorkspace: true),
-                requiresNetwork: true,
+                requiresNetwork,
                 expectedChanges: [expectedChange ?? $"{capability.Requirement.Id}.json"]))
             .ToArray();
         return new DependencyPlan(workspace, null, capabilities, steps);
@@ -201,6 +234,19 @@ public sealed class DependencyPlanWorkflowTests
             var requirement = Assert.Single(requirements);
             Requests.Add(requirement);
             return Task.FromResult(respond(requirement));
+        }
+    }
+
+    private sealed class RecordingNetworkAccessAdapter : INetworkAccessAdapter
+    {
+        public int CallCount { get; private set; }
+
+        public Task<NetworkAccessDecision> AuthorizeAsync(
+            NetworkAccessRequest request,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            return Task.FromResult(new NetworkAccessDecision(true));
         }
     }
 }
