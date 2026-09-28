@@ -66,6 +66,7 @@ OpenSpec 已勾選以下區段：
 - 9.5：啟動時以唯讀 `IDotNetEnvironmentDiscovery` 探索 SDK；缺少或偵測失敗時主視窗仍可啟動，顯示繁中功能受限與 .NET 10 SDK 安裝指引，Demo 瀏覽不被阻擋。App/ViewModel/XAML smoke test 與 arm64/x64 隔離 HOME/PATH 實際啟動驗收均通過；x64 於本機透過 Rosetta 2 執行。
 - 9.6：發布 bundle 產生 `DotNetScaffoldStudio.Release.json`，標示版本 `0.1.0-demo`、RID、開發發行、未 Developer ID 簽章、未公證，並以成品檢查確認沒有 DMG/pkg 或 Homebrew Cask；apphost 的 ad hoc 簽章明確標示為非 Developer ID。
 - 9.7：完成完整 build、Integration/UI/Unit 測試、format、OpenSpec strict、diff check 與隱私/機密來源掃描；確認無直接網路/遙測 API、明文 credential pattern、shell wrapper 入口或超出第一版範圍的 DMG/pkg/Cask 成品，change 可封存。
+- 9.7 後啟動修正：新增 `MacOsDisplayLinkReadiness`，在 Avalonia 初始化前以 CoreVideo 檢查 `CVDisplayLink`；遇到 macOS `RenderTimer -6661` 時等待可用螢幕，不再讓 App 直接崩潰，並以重試與取消測試驗證。
 
 重要實作位置：
 
@@ -95,6 +96,7 @@ OpenSpec 已勾選以下區段：
 - UI smoke suite：`tests/DotNetScaffoldStudio.UiTests/MainWindowSmokeTests.cs`、`tests/DotNetScaffoldStudio.UiTests/DotNetScaffoldStudio.UiTests.csproj`
 - self-contained 發布：`src/DotNetScaffoldStudio.App/Properties/PublishProfiles/osx-arm64.pubxml`、`src/DotNetScaffoldStudio.App/Properties/PublishProfiles/osx-x64.pubxml`、`packaging/macos/SelfContainedMacOsApp.targets`
 - 發布成品 metadata 測試：`tests/DotNetScaffoldStudio.UnitTests/MacOsReleaseMetadataTests.cs`
+- macOS display link 啟動防護：`src/DotNetScaffoldStudio.App/MacOsDisplayLinkReadiness.cs`、`tests/DotNetScaffoldStudio.UiTests/MacOsDisplayLinkReadinessTests.cs`
 - 啟動環境受限狀態：`src/DotNetScaffoldStudio.Application/MainWindowViewModel.cs`、`src/DotNetScaffoldStudio.App/App.axaml.cs`、`src/DotNetScaffoldStudio.App/MainWindow.axaml`、`src/DotNetScaffoldStudio.App/Resources/Strings.zh-TW.axaml`
 - 本機設定儲存：`src/DotNetScaffoldStudio.Domain/LocalSettingsModels.cs`、`src/DotNetScaffoldStudio.Application/LocalSettingsServices.cs`、`src/DotNetScaffoldStudio.Infrastructure/LocalSettingsStore.cs`；隔離測試：`tests/DotNetScaffoldStudio.IntegrationTests/LocalSettingsStoreTests.cs`
 - 設定恢復與視窗狀態：`src/DotNetScaffoldStudio.Application/MainWindowViewModel.cs`、`src/DotNetScaffoldStudio.App/App.axaml.cs`、`src/DotNetScaffoldStudio.App/MainWindow.axaml.cs`；重啟測試：`tests/DotNetScaffoldStudio.IntegrationTests/LocalSettingsRestoreTests.cs`
@@ -114,6 +116,7 @@ OpenSpec 已勾選以下區段：
 7. OpenSpec 9.1–9.7 已完成；此 change 已通過最終驗收，可另行執行封存流程。
 8. 既有未含 RID 的 `.app` 仍是 Debug、framework-dependent 示意成品；9.4 的 Release self-contained 成品位於 `artifacts/DotNet Scaffold Studio-osx-arm64.app` 與 `artifacts/DotNet Scaffold Studio-osx-x64.app`，且 `artifacts/` 不納入版本控制。
 9. 不得提供 `database drop`，也不得加入任意 shell/終端機入口。
+10. 若 macOS 沒有可用的 active display，啟動防護會等待螢幕恢復後再建立 Avalonia 視窗；這是避免 `CVDisplayLink` 原生錯誤的預期行為。
 
 ## 下一步建議順序
 
@@ -225,6 +228,15 @@ OpenSpec 7.7 完成後的驗證結果：
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
 - 隱私/機密掃描：production source 無直接 HTTP、socket 或遙測 API；未發現常見明文 credential pattern；外部程序未使用 shell wrapper；未產生 DMG/pkg/Homebrew Cask。
+
+## 9.7 後啟動修正驗證（2026-09-28）
+
+- Build：0 警告、0 錯誤。
+- Test：150 項通過（Integration 44、UI 26、Unit 80）；新增 display link 重試、成功釋放與取消等待測試。
+- arm64/x64 self-contained publish：均成功；arm64 bundle executable 在目前自動化環境無可用 display link 時保持等待，不再拋出 `RenderTimer -6661` 後退出。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+- `git diff --check`：通過。
 
 使用下列命令重新驗證；Avalonia 遙測 opt-out 不可省略：
 
