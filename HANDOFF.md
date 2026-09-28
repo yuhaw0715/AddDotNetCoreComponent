@@ -7,8 +7,8 @@
 - 分支：`main`
 - 目前已推送基準：`main` 與 `origin/main` 應於最近完成的 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-OpenSpec 進度：51/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-本次 9.3 已完成實作與驗證並準備交付；後續從 9.4 開始，每個 task 仍須獨立完成驗證後再交付。
+OpenSpec 進度：52/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+本次 9.4 已完成實作與驗證並準備交付；後續從 9.5 開始，每個 task 仍須獨立完成驗證後再交付。
 
 ## 產品與目前可操作成果
 
@@ -62,6 +62,7 @@ OpenSpec 已勾選以下區段：
 - 9.1：補齊 Domain/Application 規則的有效與失敗單元案例，涵蓋功能目錄、參數驗證、三類命令工廠、風險/機密遮蔽與產生狀態機；加入 `coverlet.collector 6.0.4`，隔離 Cobertura 報告確認總 line 59.33%、branch 48.61%，核心規則類別均有覆蓋。
 - 9.2：新增 `CliTestIsolation` 共用整合測試 harness，將本機工具與 NuGet CLI 的 `DOTNET_CLI_HOME`、`NUGET_PACKAGES`、HTTP cache 指向專用暫存目錄，並以使用者 profile 前後快照確認未修改全域工具、NuGet 設定或真實工作區；LocalTool service 支援測試環境注入但仍固定禁止 `--global`。
 - 9.3：新增 `MainWindowSmokeTests`，以不需 windowing backend 的 headless-compatible UI 測試驗證 App/MainWindow XAML、工作區與導覽、參數錯誤、確認/執行結果，以及無效 JSON 設定隔離後的預設值啟動；UI 測試專案直接參考 App、Infrastructure 與 Avalonia。
+- 9.4：新增 `osx-arm64`/`osx-x64` PublishProfile 與共用 MSBuild bundle target，固定 Release self-contained、保留完整 Runtime 檔案，並產生帶 `Contents/MacOS`、`Info.plist` 與 RID 名稱的 `.app` 成品。
 
 重要實作位置：
 
@@ -89,6 +90,7 @@ OpenSpec 已勾選以下區段：
 - UI 資源與文字 provider：`src/DotNetScaffoldStudio.App/Resources/Strings.zh-TW.axaml`、`src/DotNetScaffoldStudio.Application/UiTextProvider.cs`、`src/DotNetScaffoldStudio.App/AvaloniaUiTextProvider.cs`
 - 導覽與桌面內容測試：`tests/DotNetScaffoldStudio.UiTests/DemoFlowTests.cs`
 - UI smoke suite：`tests/DotNetScaffoldStudio.UiTests/MainWindowSmokeTests.cs`、`tests/DotNetScaffoldStudio.UiTests/DotNetScaffoldStudio.UiTests.csproj`
+- self-contained 發布：`src/DotNetScaffoldStudio.App/Properties/PublishProfiles/osx-arm64.pubxml`、`src/DotNetScaffoldStudio.App/Properties/PublishProfiles/osx-x64.pubxml`、`packaging/macos/SelfContainedMacOsApp.targets`
 - 本機設定儲存：`src/DotNetScaffoldStudio.Domain/LocalSettingsModels.cs`、`src/DotNetScaffoldStudio.Application/LocalSettingsServices.cs`、`src/DotNetScaffoldStudio.Infrastructure/LocalSettingsStore.cs`；隔離測試：`tests/DotNetScaffoldStudio.IntegrationTests/LocalSettingsStoreTests.cs`
 - 設定恢復與視窗狀態：`src/DotNetScaffoldStudio.Application/MainWindowViewModel.cs`、`src/DotNetScaffoldStudio.App/App.axaml.cs`、`src/DotNetScaffoldStudio.App/MainWindow.axaml.cs`；重啟測試：`tests/DotNetScaffoldStudio.IntegrationTests/LocalSettingsRestoreTests.cs`
 - 工作階段執行歷程：`src/DotNetScaffoldStudio.Domain/ExecutionHistoryModels.cs`、`src/DotNetScaffoldStudio.Application/ExecutionHistory.cs`、`src/DotNetScaffoldStudio.Application/CommandExecutionWorkflow.cs`；序列化遮蔽測試：`tests/DotNetScaffoldStudio.UnitTests/ExecutionHistoryTests.cs`
@@ -103,17 +105,17 @@ OpenSpec 已勾選以下區段：
 3. OpenSpec 3.4 已完成：正式工作流程會在修改命令前後擷取 Git/檔案狀態；取消後以不受取消 token 影響的掃描回報部分輸出。CommandProbe 整合測試驗證正常終止嘗試、必要時終止程序樹與差異摘要。
 4. OpenSpec 5.1–5.8 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6/5.7 的本機工具與 NuGet 服務、5.8 的 guidance service 已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。
 5. OpenSpec 6.1–6.7 已完成 schema 表單狀態、欄位驗證、三類命令工廠、輸出衝突檢查與可取消產生流程；7.1–7.6 已建立桌面導覽、工作區狀態、功能搜尋、參數編輯、確認與結果差異骨架，但正式產生流程尚未接入 Avalonia UI。
-6. UI 是操作流程 Demo；正式產生流程尚未接入 Avalonia UI。7.7 已完成資源化、焦點順序與非顏色狀態提示；現有 UI 測試主要驗證 ViewModel 與 XAML 靜態標記，不是完整 headless Avalonia smoke suite。
-7. OpenSpec 9.4–9.7 尚未完成，包含 self-contained 發布、啟動驗收、成品資訊與最終驗收。
-8. 目前 `.app` 是 Debug、framework-dependent、osx-arm64 示意成品；不是 9.4 要求的 arm64/x64 self-contained 發布成果。
+6. UI 是操作流程 Demo；正式產生流程尚未接入 Avalonia UI。7.7 已完成資源化、焦點順序與非顏色狀態提示；9.3 smoke suite 可在不需 windowing backend 的 headless-compatible 測試環境執行，但不等同於實體桌面互動驗收。
+7. OpenSpec 9.5–9.7 尚未完成，包含相容 macOS 啟動驗收、成品資訊與最終驗收。
+8. 既有未含 RID 的 `.app` 仍是 Debug、framework-dependent 示意成品；9.4 的 Release self-contained 成品位於 `artifacts/DotNet Scaffold Studio-osx-arm64.app` 與 `artifacts/DotNet Scaffold Studio-osx-x64.app`，且 `artifacts/` 不納入版本控制。
 9. 不得提供 `database drop`，也不得加入任意 shell/終端機入口。
 
 ## 下一步建議順序
 
-接續 OpenSpec 9.4：
+接續 OpenSpec 9.5：
 
-1. 建立 `osx-arm64` 與 `osx-x64` self-contained `.app` 發布設定並檢查 bundle 結構。
-2. 以兩個 RID 的 `dotnet publish` 驗證發布成品不依賴另裝 Runtime，再處理 9.5。
+1. 在相容 macOS 上以 arm64/x64 對應成品執行啟動驗收，並模擬缺少 .NET SDK 的受限狀態。
+2. 保持發布成品不簽章、不公證，接著處理 9.6 成品資訊。
 3. 每完成一項即獨立 commit/push、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 前次完整驗證（2026-09-22）
@@ -183,6 +185,16 @@ OpenSpec 7.7 完成後的驗證結果：
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
 
+## 最近一次完整驗證（2026-09-28；OpenSpec 9.4）
+
+- arm64 publish：成功；bundle executable 為 Mach-O arm64，具備 `Info.plist`、`libcoreclr.dylib`、`libhostfxr.dylib` 與 runtimeconfig。
+- x64 publish：成功；bundle executable 為 Mach-O x86_64，具備 `Info.plist`、`libcoreclr.dylib`、`libhostfxr.dylib` 與 runtimeconfig。
+- Build：0 警告、0 錯誤。
+- Test：144 項通過（Integration 44、UI 23、Unit 77）；首次完整測試的既有取消案例時序超時，單獨重跑與第二次完整測試均通過。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+- `git diff --check`：通過。
+
 使用下列命令重新驗證；Avalonia 遙測 opt-out 不可省略：
 
 ```bash
@@ -235,7 +247,7 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 9.4：建立 `osx-arm64` 與 `osx-x64` self-contained `.app` 發布設定。完成後只在對應驗證全部通過時勾選 9.4，不要提前開始 9.5。
+下一個實作目標是 OpenSpec 9.5：在相容 macOS 上執行 arm64/x64 對應啟動驗收，並驗證缺少 .NET SDK 時仍能顯示受限狀態。完成後只在對應驗證全部通過時勾選 9.5，不要提前開始 9.6。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 

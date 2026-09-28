@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <MacOsAppContentsPath>$(MacOsAppBundlePath)/Contents</MacOsAppContentsPath>
+    <MacOsAppExecutablePath>$(MacOsAppContentsPath)/MacOS</MacOsAppExecutablePath>
+  </PropertyGroup>
+
+  <Target Name="CreateSelfContainedMacOsAppBundle"
+          AfterTargets="Publish"
+          Condition="&apos;$(RuntimeIdentifier)&apos; == &apos;osx-arm64&apos; Or &apos;$(RuntimeIdentifier)&apos; == &apos;osx-x64&apos;">
+    <RemoveDir Directories="$(MacOsAppBundlePath)" />
+    <MakeDir Directories="$(MacOsAppExecutablePath)" />
+    <ItemGroup>
+      <_MacOsPublishedFile Include="$(PublishDir)**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_MacOsPublishedFile)"
+          DestinationFiles="@(_MacOsPublishedFile-&gt;&apos;$(MacOsAppExecutablePath)/%(RecursiveDir)%(Filename)%(Extension)&apos;)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../../packaging/macos/Info.plist"
+          DestinationFiles="$(MacOsAppContentsPath)/Info.plist"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>
