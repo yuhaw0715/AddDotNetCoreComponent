@@ -51,9 +51,9 @@ public sealed class LocalSettingsStore : ILocalSettingsStore
                     QuarantineSettingsFile());
             }
 
-            return new(
-                new LocalSettingsDocument(schemaVersion),
-                LocalSettingsLoadStatus.Loaded);
+            var settings = document.RootElement.Deserialize<LocalSettingsDocument>(SerializerOptions)
+                ?? throw new JsonException();
+            return new(settings, LocalSettingsLoadStatus.Loaded);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -67,6 +67,13 @@ public sealed class LocalSettingsStore : ILocalSettingsStore
                 QuarantineSettingsFile());
         }
         catch (InvalidDataException)
+        {
+            return new(
+                LocalSettingsDocument.Default,
+                LocalSettingsLoadStatus.RecoveredFromCorruptFile,
+                QuarantineSettingsFile());
+        }
+        catch (NotSupportedException)
         {
             return new(
                 LocalSettingsDocument.Default,

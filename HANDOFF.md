@@ -5,10 +5,10 @@
 - 日期：2026-09-28（Asia/Taipei）
 - 儲存庫：`https://github.com/yuhaw0715/AddDotNetCoreComponent.git`
 - 分支：`main`
-- 目前已推送基準：`7167ceb`「完成繁中資源與無障礙介面」；本次 8.1 變更已完成但尚未 commit/push，等待使用者對該次操作明確授權。
+- 目前已推送基準：`main` 與 `origin/main` 應於最近完成的 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-- OpenSpec 進度：45/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-- 本次 8.1 已完成實作與驗證，未執行 commit/push；後續從 8.2 開始，每個 task 仍須獨立完成驗證後再交付。
+- OpenSpec 進度：46/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+- 本次 8.2 已完成實作與驗證；後續從 8.3 開始，每個 task 仍須獨立完成驗證後再交付。
 
 ## 產品與目前可操作成果
 
@@ -56,6 +56,7 @@ OpenSpec 已勾選以下區段：
 - 7.6：執行面板顯示階段、即時 Demo 輸出、成功/失敗/取消結果、執行前既有與執行後檔案差異及 Git 摘要；`FinderRevealService` 只以 `open` 加 `ArgumentList` 提供 macOS 顯示輸出位置。
 - 7.7：`Strings.zh-TW.axaml` 集中 Avalonia 固定文字，`IUiTextProvider` 提供 ViewModel、Demo 執行與 Finder adapter 的可替換文字；主要控制項補上 `AutomationProperties.Name`、TabIndex 與文字化狀態提示，資源掃描及鍵盤／非顏色 UI 測試通過。
 - 8.1：新增具 schema version 的 `LocalSettingsDocument` 與 `ILocalSettingsStore`；`LocalSettingsStore` 使用 `System.Text.Json`、同目錄暫存檔 flush 後 atomic replace，讀取無效 JSON 或不支援 schema 時隔離原檔並回傳安全預設值；中斷寫入、有效 JSON、無效 JSON 與不支援版本均以隔離暫存目錄測試驗證。
+- 8.2：設定文件保存最近工作區與各工作區最後目標專案、視窗尺寸/位置/最大化狀態及導覽選擇/收合偏好；App 啟動時驗證並恢復最近有效工作區，失效路徑會清除，關閉時保存目前狀態；隔離重啟測試驗證有效資料恢復與失效項目移除。
 
 重要實作位置：
 
@@ -83,6 +84,7 @@ OpenSpec 已勾選以下區段：
 - UI 資源與文字 provider：`src/DotNetScaffoldStudio.App/Resources/Strings.zh-TW.axaml`、`src/DotNetScaffoldStudio.Application/UiTextProvider.cs`、`src/DotNetScaffoldStudio.App/AvaloniaUiTextProvider.cs`
 - 導覽與桌面內容測試：`tests/DotNetScaffoldStudio.UiTests/DemoFlowTests.cs`
 - 本機設定儲存：`src/DotNetScaffoldStudio.Domain/LocalSettingsModels.cs`、`src/DotNetScaffoldStudio.Application/LocalSettingsServices.cs`、`src/DotNetScaffoldStudio.Infrastructure/LocalSettingsStore.cs`；隔離測試：`tests/DotNetScaffoldStudio.IntegrationTests/LocalSettingsStoreTests.cs`
+- 設定恢復與視窗狀態：`src/DotNetScaffoldStudio.Application/MainWindowViewModel.cs`、`src/DotNetScaffoldStudio.App/App.axaml.cs`、`src/DotNetScaffoldStudio.App/MainWindow.axaml.cs`；重啟測試：`tests/DotNetScaffoldStudio.IntegrationTests/LocalSettingsRestoreTests.cs`
 
 ## 已知限制與不可誤判事項
 
@@ -92,16 +94,16 @@ OpenSpec 已勾選以下區段：
 4. OpenSpec 5.1–5.8 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6/5.7 的本機工具與 NuGet 服務、5.8 的 guidance service 已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。
 5. OpenSpec 6.1–6.7 已完成 schema 表單狀態、欄位驗證、三類命令工廠、輸出衝突檢查與可取消產生流程；7.1–7.6 已建立桌面導覽、工作區狀態、功能搜尋、參數編輯、確認與結果差異骨架，但正式產生流程尚未接入 Avalonia UI。
 6. UI 是操作流程 Demo；正式產生流程尚未接入 Avalonia UI。7.7 已完成資源化、焦點順序與非顏色狀態提示；現有 UI 測試主要驗證 ViewModel 與 XAML 靜態標記，不是完整 headless Avalonia smoke suite。
-7. OpenSpec 8.2–9.7 尚未完成，包含最近工作區/偏好恢復、歷程、隱私稽核、coverage、完整 UI smoke、self-contained 發布與最終驗收。
+7. OpenSpec 8.3–9.7 尚未完成，包含工作階段歷程、隱私稽核、coverage、完整 UI smoke、self-contained 發布與最終驗收。
 8. 目前 `.app` 是 Debug、framework-dependent、osx-arm64 示意成品；不是 9.4 要求的 arm64/x64 self-contained 發布成果。
 9. 不得提供 `database drop`，也不得加入任意 shell/終端機入口。
 
 ## 下一步建議順序
 
-接續 OpenSpec 8.2：
+接續 OpenSpec 8.3：
 
-1. 在 8.1 的設定儲存基礎上保存最近工作區、最後專案、視窗狀態與非敏感偏好。
-2. 以重啟測試驗證有效路徑恢復及失效路徑清除，再處理 8.3。
+1. 實作只含遮蔽資料的工作階段執行歷程。
+2. 以序列化內容掃描驗證不包含連線字串、Token 或密碼，再處理 8.4。
 3. 每完成一項即獨立 commit/push、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 前次完整驗證（2026-09-22）
@@ -118,6 +120,14 @@ OpenSpec 7.7 完成後的驗證結果：
 
 - Build：0 警告、0 錯誤。
 - Test：125 項通過（Integration 41、UI 18、Unit 66）；新增本機設定有效 JSON、atomic replace 暫存檔清理、中斷寫入保留舊設定、無效 JSON 隔離復原及不支援 schema 復原案例通過。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+- `git diff --check`：通過。
+
+## 最近一次完整驗證（2026-09-28；OpenSpec 8.2）
+
+- Build：0 警告、0 錯誤。
+- Test：127 項通過（Integration 43、UI 18、Unit 66）；新增設定重啟恢復工作區/目標專案/視窗/導覽偏好，以及失效最近工作區清除案例通過。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
@@ -174,7 +184,7 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 8.2：在既有設定儲存基礎上保存最近工作區、最後專案、視窗狀態與非敏感偏好。完成後只在對應驗證全部通過時勾選 8.2，不要提前開始 8.3。
+下一個實作目標是 OpenSpec 8.3：實作只含遮蔽資料的工作階段執行歷程。完成後只在對應驗證全部通過時勾選 8.3，不要提前開始 8.4。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 

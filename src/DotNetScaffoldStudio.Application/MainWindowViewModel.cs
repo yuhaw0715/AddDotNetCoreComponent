@@ -456,21 +456,47 @@ public sealed class MainWindowViewModel : ObservableObject
     public string WorkingDirectoryText => BuildCommandPreview()?.WorkingDirectory ?? WorkspacePath;
     public string FeatureCountSummary => _text.Format("Feature.Count", VisibleFeatures.Count);
 
-    public async Task LoadWorkspaceAsync(string path)
+    public Task<bool> LoadWorkspaceAsync(string path, string? preferredProjectPath = null) =>
+        LoadWorkspaceCoreAsync(path, preferredProjectPath);
+
+    public LocalSettingsPreferences CapturePreferences() =>
+        new(SelectedNavigation?.Id, IsNavigationCollapsed);
+
+    public RecentWorkspaceEntry? CaptureRecentWorkspace() =>
+        IsWorkspacePlaceholder(WorkspacePath)
+            ? null
+            : new RecentWorkspaceEntry(WorkspacePath, SelectedProject?.Path);
+
+    public void RestorePreferences(LocalSettingsPreferences preferences)
     {
-        await LoadWorkspaceCoreAsync(path);
+        ArgumentNullException.ThrowIfNull(preferences);
+
+        if (!string.IsNullOrWhiteSpace(preferences.SelectedNavigationId))
+        {
+            var navigation = NavigationItems.FirstOrDefault(item =>
+                string.Equals(item.Id, preferences.SelectedNavigationId, StringComparison.Ordinal));
+            if (navigation is not null)
+            {
+                SelectedNavigation = navigation;
+            }
+        }
+
+        IsNavigationCollapsed = preferences.IsNavigationCollapsed;
+    }
+
+    private async Task ScanWorkspaceAsync()
+    {
+        _ = await LoadWorkspaceCoreAsync(WorkspacePath, preferredProjectPath: null);
     }
 
     private bool CanScanWorkspace() => !IsScanning && !string.IsNullOrWhiteSpace(WorkspacePath) && !IsWorkspacePlaceholder(WorkspacePath);
 
-    private Task ScanWorkspaceAsync() => LoadWorkspaceCoreAsync(WorkspacePath);
-
-    private async Task LoadWorkspaceCoreAsync(string path)
+    private async Task<bool> LoadWorkspaceCoreAsync(string path, string? preferredProjectPath)
     {
         if (string.IsNullOrWhiteSpace(path) || IsWorkspacePlaceholder(path))
         {
             StatusMessage = _text.Get("Status.InvalidWorkspace");
-            return;
+            return false;
         }
 
         IsScanning = true;
@@ -491,20 +517,41 @@ public sealed class MainWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(HasProjects));
             OnPropertyChanged(nameof(IsMultipleProjects));
 
-            SelectedProject = Projects.Count == 1 ? Projects[0] : null;
+            SelectedProject = FindProject(preferredProjectPath) ?? (Projects.Count == 1 ? Projects[0] : null);
             StatusMessage = Projects.Count == 0
                 ? _text.Get("Status.NoProjects")
                 : Projects.Count == 1
                     ? _text.Get("Status.SingleProject")
                     : _text.Format("Status.MultipleProjects", Projects.Count);
+            return true;
         }
         catch (Exception exception)
         {
             StatusMessage = _text.Format("Status.LoadFailure", exception.Message);
+            return false;
         }
         finally
         {
             IsScanning = false;
+        }
+    }
+
+    private ProjectInfo? FindProject(string? preferredProjectPath)
+    {
+        if (string.IsNullOrWhiteSpace(preferredProjectPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var fullPreferredPath = Path.GetFullPath(preferredProjectPath);
+            return Projects.FirstOrDefault(project =>
+                string.Equals(Path.GetFullPath(project.Path), fullPreferredPath, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (ArgumentException)
+        {
+            return null;
         }
     }
 

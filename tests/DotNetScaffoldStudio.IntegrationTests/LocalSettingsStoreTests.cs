@@ -19,6 +19,9 @@ public sealed class LocalSettingsStoreTests
 
             var json = await File.ReadAllTextAsync(settingsPath);
             Assert.Contains("\"schemaVersion\": 1", json, StringComparison.Ordinal);
+            Assert.Contains("\"recentWorkspaces\": []", json, StringComparison.Ordinal);
+            Assert.Contains("\"width\": 1360", json, StringComparison.Ordinal);
+            Assert.Contains("\"isNavigationCollapsed\": false", json, StringComparison.Ordinal);
             var result = await store.LoadAsync(CancellationToken.None);
             Assert.Equal(LocalSettingsLoadStatus.Loaded, result.Status);
             Assert.Equal(LocalSettingsDocument.CurrentSchemaVersion, result.Settings.SchemaVersion);
@@ -50,9 +53,7 @@ public sealed class LocalSettingsStoreTests
             var result = await store.LoadAsync(CancellationToken.None);
             Assert.Equal(LocalSettingsLoadStatus.Loaded, result.Status);
             Assert.Equal(LocalSettingsDocument.CurrentSchemaVersion, result.Settings.SchemaVersion);
-            Assert.Equal(
-                "{\n  \"schemaVersion\": 1\n}",
-                await File.ReadAllTextAsync(settingsPath));
+            Assert.Contains("\"schemaVersion\": 1", await File.ReadAllTextAsync(settingsPath), StringComparison.Ordinal);
         }
         finally
         {

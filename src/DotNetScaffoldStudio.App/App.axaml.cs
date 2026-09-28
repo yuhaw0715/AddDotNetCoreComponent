@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using DotNetScaffoldStudio.Application;
+using DotNetScaffoldStudio.Domain;
 using DotNetScaffoldStudio.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,7 +14,7 @@ public sealed partial class App : Avalonia.Application
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
-    public override void OnFrameworkInitializationCompleted()
+    public override async void OnFrameworkInitializationCompleted()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
@@ -62,12 +63,68 @@ public sealed partial class App : Avalonia.Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
+            var settingsStore = _serviceProvider.GetRequiredService<ILocalSettingsStore>();
+            var loadedSettings = await LoadSettingsAsync(settingsStore);
+            var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+            viewModel.RestorePreferences(loadedSettings.Settings.Preferences);
+
+            var settingsSession = new LocalSettingsSession(loadedSettings.Settings);
+            var mainWindow = new MainWindow
             {
-                DataContext = _serviceProvider.GetRequiredService<MainWindowViewModel>()
+                DataContext = viewModel
             };
+            mainWindow.ApplyWindowSettings(loadedSettings.Settings.Window);
+
+            var recentWorkspaceCount = settingsSession.RecentWorkspaces.Count;
+            await settingsSession.RestoreMostRecentWorkspaceAsync(
+                viewModel,
+                static path => Directory.Exists(path) || File.Exists(path),
+                CancellationToken.None);
+            if (settingsSession.RecentWorkspaces.Count != recentWorkspaceCount)
+            {
+                await settingsStore.SaveAsync(
+                    settingsSession.CreateDocument(viewModel.CapturePreferences(), mainWindow.CaptureWindowSettings()),
+                    CancellationToken.None);
+            }
+
+            var isClosing = false;
+            mainWindow.Closing += async (_, eventArgs) =>
+            {
+                if (isClosing)
+                {
+                    return;
+                }
+
+                eventArgs.Cancel = true;
+                isClosing = true;
+                try
+                {
+                    await settingsStore.SaveAsync(
+                        settingsSession.Capture(viewModel, mainWindow.CaptureWindowSettings()),
+                        CancellationToken.None);
+                }
+                finally
+                {
+                    eventArgs.Cancel = false;
+                    mainWindow.Close();
+                }
+            };
+
+            desktop.MainWindow = mainWindow;
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static async Task<LocalSettingsLoadResult> LoadSettingsAsync(ILocalSettingsStore settingsStore)
+    {
+        try
+        {
+            return await settingsStore.LoadAsync(CancellationToken.None);
+        }
+        catch
+        {
+            return new(LocalSettingsDocument.Default, LocalSettingsLoadStatus.Defaults);
+        }
     }
 }
