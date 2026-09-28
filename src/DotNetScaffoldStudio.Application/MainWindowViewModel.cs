@@ -35,6 +35,9 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _resultTitle = string.Empty;
     private string _resultSummary = string.Empty;
     private string _gitDifferenceSummary = string.Empty;
+    private bool _isEnvironmentRestricted;
+    private string _environmentStatusMessage = string.Empty;
+    private string _environmentGuidanceMessage = string.Empty;
 
     public MainWindowViewModel(IWorkspaceService workspaceService, IDemoExecutionService executionService)
         : this(workspaceService, executionService, new ParameterValidator(), new DemoFileRevealService(), new DefaultUiTextProvider(), null)
@@ -78,6 +81,8 @@ public sealed class MainWindowViewModel : ObservableObject
         _componentName = _text.Get("Defaults.ControllerName");
         _outputPath = _text.Get("Defaults.OutputPath");
         _selectedTemplateMode = _text.Get("Template.ReadWrite");
+        _environmentStatusMessage = _text.Get("Environment.Checking");
+        _environmentGuidanceMessage = _text.Get("Environment.CheckingGuidance");
 
         ScanWorkspaceCommand = new AsyncRelayCommand(ScanWorkspaceAsync, CanScanWorkspace);
         UseDemoWorkspaceCommand = new RelayCommand(UseDemoWorkspace);
@@ -408,6 +413,24 @@ public sealed class MainWindowViewModel : ObservableObject
         private set => SetProperty(ref _statusMessage, value);
     }
 
+    public bool IsEnvironmentRestricted
+    {
+        get => _isEnvironmentRestricted;
+        private set => SetProperty(ref _isEnvironmentRestricted, value);
+    }
+
+    public string EnvironmentStatusMessage
+    {
+        get => _environmentStatusMessage;
+        private set => SetProperty(ref _environmentStatusMessage, value);
+    }
+
+    public string EnvironmentGuidanceMessage
+    {
+        get => _environmentGuidanceMessage;
+        private set => SetProperty(ref _environmentGuidanceMessage, value);
+    }
+
     public string ExecutionOutput
     {
         get => _executionOutput;
@@ -463,6 +486,45 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public Task<bool> LoadWorkspaceAsync(string path, string? preferredProjectPath = null) =>
         LoadWorkspaceCoreAsync(path, preferredProjectPath);
+
+    public async Task LoadEnvironmentStatusAsync(
+        IDotNetEnvironmentDiscovery discovery,
+        string workspaceRoot,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(discovery);
+        ArgumentException.ThrowIfNullOrWhiteSpace(workspaceRoot);
+
+        try
+        {
+            var snapshot = await discovery.DiscoverAsync(workspaceRoot, cancellationToken);
+            var hasSdk = snapshot.SdkStatus == EnvironmentDetectionStatus.Available;
+            IsEnvironmentRestricted = !hasSdk;
+            if (hasSdk)
+            {
+                var version = snapshot.ActiveSdkVersion ??
+                    snapshot.Sdks.FirstOrDefault()?.Version ??
+                    _text.Get("Environment.UnknownVersion");
+                EnvironmentStatusMessage = _text.Format("Environment.SdkAvailable", version);
+                EnvironmentGuidanceMessage = _text.Get("Environment.ReadyGuidance");
+            }
+            else
+            {
+                EnvironmentStatusMessage = _text.Get("Environment.RestrictedStatus");
+                EnvironmentGuidanceMessage = _text.Get("Environment.RestrictedGuidance");
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            IsEnvironmentRestricted = true;
+            EnvironmentStatusMessage = _text.Get("Environment.RestrictedStatus");
+            EnvironmentGuidanceMessage = _text.Get("Environment.RestrictedGuidance");
+        }
+    }
 
     public LocalSettingsPreferences CapturePreferences() =>
         new(SelectedNavigation?.Id, IsNavigationCollapsed);

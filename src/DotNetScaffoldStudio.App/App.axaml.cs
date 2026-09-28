@@ -70,6 +70,10 @@ public sealed partial class App : Avalonia.Application
             var loadedSettings = await LoadSettingsAsync(settingsStore);
             var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
             viewModel.RestorePreferences(loadedSettings.Settings.Preferences);
+            await viewModel.LoadEnvironmentStatusAsync(
+                _serviceProvider.GetRequiredService<IDotNetEnvironmentDiscovery>(),
+                AppContext.BaseDirectory,
+                CancellationToken.None);
 
             var settingsSession = new LocalSettingsSession(loadedSettings.Settings);
             var mainWindow = new MainWindow

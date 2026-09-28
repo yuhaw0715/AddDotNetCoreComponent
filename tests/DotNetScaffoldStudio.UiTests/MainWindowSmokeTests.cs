@@ -21,6 +21,7 @@ public sealed class MainWindowSmokeTests
         Assert.Contains("x:Class=\"DotNetScaffoldStudio.App.MainWindow\"", markup, StringComparison.Ordinal);
         Assert.Contains("Command=\"{Binding RequestExecutionCommand}\"", markup, StringComparison.Ordinal);
         Assert.Contains("Command=\"{Binding ConfirmExecutionCommand}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("IsEnvironmentRestricted", markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -113,6 +114,38 @@ public sealed class MainWindowSmokeTests
         Assert.NotNull(app.Resources);
     }
 
+    [Fact]
+    public async Task Startup_WithoutSdk_ShowsRestrictedGuidanceButKeepsDemoAvailable()
+    {
+        using var temporaryDirectory = new TemporaryDirectory();
+        var viewModel = CreateViewModel(new FakeExecutionService());
+        var snapshot = new DotNetEnvironmentSnapshot(
+            EnvironmentDetectionStatus.Available,
+            "10.0.10",
+            "arm64",
+            null,
+            EnvironmentDetectionStatus.Missing,
+            [],
+            EnvironmentDetectionStatus.Available,
+            [new DotNetRuntimeInstallation("Microsoft.NETCore.App", "10.0.10", "/runtime")],
+            EnvironmentDetectionStatus.DetectionFailed,
+            [],
+            EnvironmentDetectionStatus.Missing,
+            EnvironmentDetectionStatus.Missing,
+            [],
+            ["找不到已安裝的 .NET SDK"]);
+
+        await viewModel.LoadEnvironmentStatusAsync(
+            new FakeEnvironmentDiscovery(snapshot),
+            temporaryDirectory.Path,
+            CancellationToken.None);
+
+        Assert.True(viewModel.IsEnvironmentRestricted);
+        Assert.Contains("功能受限", viewModel.EnvironmentStatusMessage, StringComparison.Ordinal);
+        Assert.Contains("安裝 .NET 10 SDK", viewModel.EnvironmentGuidanceMessage, StringComparison.Ordinal);
+        Assert.True(viewModel.CanExecuteSelectedFeature);
+    }
+
     private static string ReadMainWindowMarkup()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
@@ -158,6 +191,13 @@ public sealed class MainWindowSmokeTests
             string path,
             CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<ProjectInfo>>([]);
+    }
+
+    private sealed class FakeEnvironmentDiscovery(DotNetEnvironmentSnapshot snapshot) : IDotNetEnvironmentDiscovery
+    {
+        public Task<DotNetEnvironmentSnapshot> DiscoverAsync(
+            string workspaceRoot,
+            CancellationToken cancellationToken) => Task.FromResult(snapshot);
     }
 
     private sealed class FakeExecutionService : IDemoExecutionService
