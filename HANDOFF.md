@@ -7,8 +7,8 @@
 - 分支：`main`
 - 目前已推送基準：`main` 與 `origin/main` 應於最近完成的 task commit 同步；實際 commit 以 `git log -1` 驗證。
 - OpenSpec change：`build-dotnet-scaffold-studio`
-- OpenSpec 進度：49/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
-- 本次 9.1 已完成實作與驗證並準備交付；後續從 9.2 開始，每個 task 仍須獨立完成驗證後再交付。
+- OpenSpec 進度：50/55；最終狀態一律以 `tasks.md` 與 `openspec instructions apply` 的輸出為準。
+- 本次 9.2 已完成實作與驗證並準備交付；後續從 9.3 開始，每個 task 仍須獨立完成驗證後再交付。
 
 ## 產品與目前可操作成果
 
@@ -60,6 +60,7 @@ OpenSpec 已勾選以下區段：
 - 8.3：新增記憶體內 `SessionExecutionHistory` 與不可變 `ExecutionHistoryEntry`，正式命令 workflow 與 Demo 都保存時間、功能、遮蔽命令、工作目錄、結束碼、取消狀態、摘要及遮蔽輸出；歷程頁顯示本次工作階段資料，序列化測試掃描連線字串、Token 與密碼均不會出現。
 - 8.4：稽核確認產品沒有遙測 SDK、`HttpClient`、`WebClient` 或 socket 背景連線；新增 `INetworkAccessAdapter`，相依性計畫只有在有效確認後才授權需網路步驟，本機步驟不觸發 adapter，並以 fake/實際 adapter 及 production source audit 測試驗證離線邊界。
 - 9.1：補齊 Domain/Application 規則的有效與失敗單元案例，涵蓋功能目錄、參數驗證、三類命令工廠、風險/機密遮蔽與產生狀態機；加入 `coverlet.collector 6.0.4`，隔離 Cobertura 報告確認總 line 59.33%、branch 48.61%，核心規則類別均有覆蓋。
+- 9.2：新增 `CliTestIsolation` 共用整合測試 harness，將本機工具與 NuGet CLI 的 `DOTNET_CLI_HOME`、`NUGET_PACKAGES`、HTTP cache 指向專用暫存目錄，並以使用者 profile 前後快照確認未修改全域工具、NuGet 設定或真實工作區；LocalTool service 支援測試環境注入但仍固定禁止 `--global`。
 
 重要實作位置：
 
@@ -91,6 +92,7 @@ OpenSpec 已勾選以下區段：
 - 工作階段執行歷程：`src/DotNetScaffoldStudio.Domain/ExecutionHistoryModels.cs`、`src/DotNetScaffoldStudio.Application/ExecutionHistory.cs`、`src/DotNetScaffoldStudio.Application/CommandExecutionWorkflow.cs`；序列化遮蔽測試：`tests/DotNetScaffoldStudio.UnitTests/ExecutionHistoryTests.cs`
 - 網路授權與隱私稽核：`src/DotNetScaffoldStudio.Application/NetworkAccess.cs`、`src/DotNetScaffoldStudio.Infrastructure/UserInitiatedNetworkAccessAdapter.cs`、`src/DotNetScaffoldStudio.Application/DependencyPlanWorkflow.cs`；測試：`tests/DotNetScaffoldStudio.UnitTests/NetworkPrivacyTests.cs`、`tests/DotNetScaffoldStudio.IntegrationTests/UserInitiatedNetworkAccessAdapterTests.cs`
 - 領域/Application coverage 測試：`tests/DotNetScaffoldStudio.UnitTests/ApplicationRulesCoverageTests.cs`、`tests/DotNetScaffoldStudio.UnitTests/GenerationWorkflowTests.cs`；coverage collector：`Directory.Packages.props`、`tests/DotNetScaffoldStudio.UnitTests/DotNetScaffoldStudio.UnitTests.csproj`
+- CLI 隔離 harness：`tests/DotNetScaffoldStudio.IntegrationTests/CliTestIsolation.cs`、`tests/DotNetScaffoldStudio.IntegrationTests/LocalToolInstallationServiceTests.cs`、`tests/DotNetScaffoldStudio.IntegrationTests/NuGetPackageInstallationServiceTests.cs`；環境注入：`src/DotNetScaffoldStudio.Infrastructure/LocalToolInstallationService.cs`
 
 ## 已知限制與不可誤判事項
 
@@ -100,16 +102,16 @@ OpenSpec 已勾選以下區段：
 4. OpenSpec 5.1–5.8 已完成：環境、範本與相依性探索服務是唯讀流程，計畫流程以結構化命令、一次性確認與重驗證執行；5.6/5.7 的本機工具與 NuGet 服務、5.8 的 guidance service 已註冊至 App 組合根，但 Avalonia UI 尚未呼叫正式相依性流程。
 5. OpenSpec 6.1–6.7 已完成 schema 表單狀態、欄位驗證、三類命令工廠、輸出衝突檢查與可取消產生流程；7.1–7.6 已建立桌面導覽、工作區狀態、功能搜尋、參數編輯、確認與結果差異骨架，但正式產生流程尚未接入 Avalonia UI。
 6. UI 是操作流程 Demo；正式產生流程尚未接入 Avalonia UI。7.7 已完成資源化、焦點順序與非顏色狀態提示；現有 UI 測試主要驗證 ViewModel 與 XAML 靜態標記，不是完整 headless Avalonia smoke suite。
-7. OpenSpec 9.2–9.7 尚未完成，包含隔離 CLI harness、完整 UI smoke、self-contained 發布與最終驗收。
+7. OpenSpec 9.3–9.7 尚未完成，包含完整 UI smoke、self-contained 發布與最終驗收。
 8. 目前 `.app` 是 Debug、framework-dependent、osx-arm64 示意成品；不是 9.4 要求的 arm64/x64 self-contained 發布成果。
 9. 不得提供 `database drop`，也不得加入任意 shell/終端機入口。
 
 ## 下一步建議順序
 
-接續 OpenSpec 9.2：
+接續 OpenSpec 9.3：
 
-1. 建立隔離 CLI 測試 harness，設定專用暫存工作區、`DOTNET_CLI_HOME` 與 NuGet 快取。
-2. 先驗證測試前後未修改真實工作區、全域工具或全域 NuGet 設定，再處理 9.3。
+1. 建立主要 UI smoke suite，涵蓋啟動、工作區、導航、參數錯誤、確認、執行結果與設定損壞復原。
+2. 以現有 headless/static UI 測試能力擴充並驗證支援的 macOS 測試命令，再處理 9.4。
 3. 每完成一項即獨立 commit/push、更新 `tasks.md`，不要一次提前勾選整個區段。
 
 ## 前次完整驗證（2026-09-22）
@@ -159,6 +161,14 @@ OpenSpec 7.7 完成後的驗證結果：
 - Build：0 警告、0 錯誤。
 - Test：139 項通過（Integration 44、UI 18、Unit 77）。
 - Coverage：UnitTests Cobertura，line 59.33%、branch 48.61%；核心類別 ParameterValidator 98.21%、EfCoreCommandFactory 93.84%、AspNetScaffoldingCommandFactory 92.56%、CommandRiskPolicy/SensitiveDataRedactor 100%、GenerationWorkflow 100%。
+- `dotnet format --verify-no-changes`：通過。
+- `openspec validate build-dotnet-scaffold-studio --strict`：通過。
+- `git diff --check`：通過。
+
+## 最近一次完整驗證（2026-09-28；OpenSpec 9.2）
+
+- Build：0 警告、0 錯誤。
+- Test：139 項通過（Integration 44、UI 18、Unit 77）；LocalTool/NuGet CLI 隔離案例 3/3 通過，使用者 profile 前後快照一致。
 - `dotnet format --verify-no-changes`：通過。
 - `openspec validate build-dotnet-scaffold-studio --strict`：通過。
 - `git diff --check`：通過。
@@ -215,7 +225,7 @@ openspec instructions apply --change build-dotnet-scaffold-studio --json
 
 已有可操作的 Avalonia 安全 Demo、完整官方功能目錄、安全 `CommandRequest`/`ProcessCommandRunner`、取消與程序樹終止流程、取消後 Git/檔案重新掃描、唯讀的 .NET 與相依性能力探索服務，以及相依性計畫—確認—執行—重驗證流程。請注意 UI 目前仍使用 `DemoCatalog` 與 `DemoExecutionService`，不會執行真實 CLI；不要把示意流程誤當成正式功能。
 
-下一個實作目標是 OpenSpec 9.2：建立隔離 CLI 測試 harness，設定專用暫存工作區、`DOTNET_CLI_HOME` 與 NuGet 快取。完成後只在對應驗證全部通過時勾選 9.2，不要提前開始 9.3。
+下一個實作目標是 OpenSpec 9.3：建立主要 UI smoke suite，涵蓋啟動、工作區、導航、參數錯誤、確認、執行結果與設定損壞復原。完成後只在對應驗證全部通過時勾選 9.3，不要提前開始 9.4。
 
 所有 Avalonia 相關命令設定 `AVALONIA_TELEMETRY_OPTOUT=1`。外部程序只能使用 executable 加 `ProcessStartInfo.ArgumentList`，禁止 shell wrapper；不得提供 `database drop`、不得安裝全域工具、不得碰觸真實專案或資料庫。
 

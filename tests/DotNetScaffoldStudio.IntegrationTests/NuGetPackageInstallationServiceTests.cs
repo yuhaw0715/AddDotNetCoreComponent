@@ -4,15 +4,18 @@ using DotNetScaffoldStudio.Infrastructure;
 
 namespace DotNetScaffoldStudio.IntegrationTests;
 
+[Collection("CLI isolation")]
 public sealed class NuGetPackageInstallationServiceTests
 {
     [Fact]
     public async Task ExecuteAsync_AddsPackageOnlyToSelectedProjectThenRestores()
     {
         using var workspace = TemporaryDirectory.Create();
+        using var isolation = CliTestIsolation.Create("nuget-success");
+        var beforeUserProfile = CliTestIsolation.CaptureUserProfileState();
         var projectPath = await CreateProjectAsync(workspace.Path, "src/Demo.Api/Demo.Api.csproj");
         var otherProjectPath = await CreateProjectAsync(workspace.Path, "src/Other/Other.csproj");
-        var service = CreateService(workspace.Path);
+        var service = CreateService(workspace.Path, isolation);
 
         var plan = await service.CreatePlanAsync(
             workspace.Path,
@@ -32,6 +35,9 @@ public sealed class NuGetPackageInstallationServiceTests
         {
             Assert.True(step.RequiresNetwork);
             Assert.Equal("1", step.Request.Environment["DOTNET_CLI_TELEMETRY_OPTOUT"]);
+            Assert.Equal(isolation.DotNetCliHome, step.Request.Environment["DOTNET_CLI_HOME"]);
+            Assert.Equal(isolation.NuGetPackages, step.Request.Environment["NUGET_PACKAGES"]);
+            Assert.Equal(isolation.NuGetHttpCache, step.Request.Environment["NUGET_HTTP_CACHE_PATH"]);
         });
 
         var result = await ExecutePlanAsync(workspace.Path, plan);
@@ -47,15 +53,19 @@ public sealed class NuGetPackageInstallationServiceTests
         Assert.Contains(
             new FileChange(FileChangeKind.Modified, "src/Demo.Api/Demo.Api.csproj"),
             result.Differences!.CommandFileChanges);
+        Assert.Equal(beforeUserProfile, CliTestIsolation.CaptureUserProfileState());
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenRestoreFailsReportsRestoreStageAndKeepsProjectChange()
     {
         using var workspace = TemporaryDirectory.Create();
+        using var isolation = CliTestIsolation.Create("nuget-failure");
+        var beforeUserProfile = CliTestIsolation.CaptureUserProfileState();
         var projectPath = await CreateProjectAsync(workspace.Path, "Demo.Api.csproj");
         var service = CreateService(
             workspace.Path,
+            isolation,
             new Dictionary<string, string>
             {
                 ["DOTNET_SCAFFOLD_STUDIO_FIXTURE_RESTORE_FAILURE"] = "1"
@@ -80,10 +90,12 @@ public sealed class NuGetPackageInstallationServiceTests
         Assert.Contains(
             new FileChange(FileChangeKind.Modified, "Demo.Api.csproj"),
             result.Differences!.CommandFileChanges);
+        Assert.Equal(beforeUserProfile, CliTestIsolation.CaptureUserProfileState());
     }
 
     private static NuGetPackageInstallationService CreateService(
         string workspaceRoot,
+        CliTestIsolation isolation,
         IReadOnlyDictionary<string, string>? additionalEnvironment = null)
     {
         var probeName = OperatingSystem.IsWindows()
@@ -91,11 +103,11 @@ public sealed class NuGetPackageInstallationServiceTests
             : "DotNetScaffoldStudio.CommandProbe";
         var probePath = Path.Combine(AppContext.BaseDirectory, probeName);
         Assert.True(File.Exists(probePath), $"找不到命令 fixture：{probePath}");
-        var environment = new Dictionary<string, string>(additionalEnvironment ?? new Dictionary<string, string>(), StringComparer.Ordinal)
+        var environment = new Dictionary<string, string>(isolation.CommandEnvironment, StringComparer.Ordinal);
+        foreach (var pair in additionalEnvironment ?? new Dictionary<string, string>())
         {
-            ["DOTNET_CLI_HOME"] = Path.Combine(workspaceRoot, ".dotnet-cli-home"),
-            ["NUGET_PACKAGES"] = Path.Combine(workspaceRoot, ".nuget-packages")
-        };
+            environment[pair.Key] = pair.Value;
+        }
         return new NuGetPackageInstallationService(
             new DependencyDiscoveryService(new FixtureEnvironmentDiscovery()),
             probePath,

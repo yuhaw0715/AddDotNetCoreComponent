@@ -73,7 +73,7 @@
 ## 9. 測試、發布與驗收
 
 - [x] 9.1 為領域/Application 規則補齊單元測試，並以 coverage 報告確認功能目錄、驗證、命令、風險、遮蔽與狀態機均有成功及失敗案例。
-- [ ] 9.2 建立隔離 CLI 測試 harness，設定專用暫存工作區、`DOTNET_CLI_HOME` 與 NuGet 快取，並以測試前後檢查驗證未修改真實工作區或全域工具。
+- [x] 9.2 建立隔離 CLI 測試 harness，設定專用暫存工作區、`DOTNET_CLI_HOME` 與 NuGet 快取，並以測試前後檢查驗證未修改真實工作區或全域工具。
 - [ ] 9.3 建立主要 UI smoke suite，涵蓋啟動、工作區、導航、參數錯誤、確認、執行結果與設定損壞復原，並以 headless/支援的 macOS 測試命令驗證通過。
 - [ ] 9.4 建立 `osx-arm64` 與 `osx-x64` self-contained `.app` 發布設定，並以 `dotnet publish` 及 bundle 結構檢查驗證兩個成品不依賴另裝 Runtime。
 - [ ] 9.5 在相容的 macOS 執行 arm64/x64 對應啟動驗收，驗證缺少 .NET SDK 時應用程式仍可啟動並顯示受限狀態。

@@ -5,7 +5,8 @@ namespace DotNetScaffoldStudio.Infrastructure;
 
 public sealed class LocalToolInstallationService(
     IDependencyDiscovery dependencyDiscovery,
-    string dotNetExecutable = "dotnet") : ILocalToolInstallationService
+    string dotNetExecutable = "dotnet",
+    IReadOnlyDictionary<string, string>? additionalEnvironment = null) : ILocalToolInstallationService
 {
     private static readonly IReadOnlyDictionary<string, string> CommandEnvironment =
         new Dictionary<string, string>(StringComparer.Ordinal)
@@ -127,7 +128,20 @@ public sealed class LocalToolInstallationService(
             workspaceRoot,
             FeatureRisk.EnvironmentChange,
             modifiesWorkspace: true,
-            environment: CommandEnvironment);
+            environment: CreateEnvironment());
+
+    private IReadOnlyDictionary<string, string> CreateEnvironment()
+    {
+        var environment = new Dictionary<string, string>(
+            additionalEnvironment ?? new Dictionary<string, string>(),
+            StringComparer.Ordinal);
+        foreach (var pair in CommandEnvironment)
+        {
+            environment[pair.Key] = pair.Value;
+        }
+
+        return environment;
+    }
 
     private static DependencyCapability Find(
         DependencyDiscoveryResult discovery,

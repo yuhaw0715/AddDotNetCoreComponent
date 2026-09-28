@@ -5,12 +5,15 @@ using DotNetScaffoldStudio.Infrastructure;
 
 namespace DotNetScaffoldStudio.IntegrationTests;
 
+[Collection("CLI isolation")]
 public sealed class LocalToolInstallationServiceTests
 {
     [Fact]
     public async Task CreatePlanAndExecuteAsync_UsesLocalManifestAndReportsToolFiles()
     {
         using var workspace = TemporaryDirectory.Create();
+        using var isolation = CliTestIsolation.Create("local-tools");
+        var beforeUserProfile = CliTestIsolation.CaptureUserProfileState();
         var probeName = OperatingSystem.IsWindows()
             ? "DotNetScaffoldStudio.CommandProbe.exe"
             : "DotNetScaffoldStudio.CommandProbe";
@@ -18,7 +21,7 @@ public sealed class LocalToolInstallationServiceTests
         Assert.True(File.Exists(probePath), $"找不到命令 fixture：{probePath}");
 
         var discovery = new FixtureDependencyDiscovery(workspace.Path);
-        var installer = new LocalToolInstallationService(discovery, probePath);
+        var installer = new LocalToolInstallationService(discovery, probePath, isolation.CommandEnvironment);
         var plan = await installer.CreatePlanAsync(
             workspace.Path,
             [new DependencyRequirement(DependencyKind.LocalTool, "Contoso.Tool", "1.2.3")],
@@ -40,6 +43,9 @@ public sealed class LocalToolInstallationServiceTests
             Assert.Equal("1", step.Request.Environment["DOTNET_CLI_TELEMETRY_OPTOUT"]);
             Assert.Equal("en", step.Request.Environment["DOTNET_CLI_UI_LANGUAGE"]);
             Assert.Equal("true", step.Request.Environment["DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE"]);
+            Assert.Equal(isolation.DotNetCliHome, step.Request.Environment["DOTNET_CLI_HOME"]);
+            Assert.Equal(isolation.NuGetPackages, step.Request.Environment["NUGET_PACKAGES"]);
+            Assert.Equal(isolation.NuGetHttpCache, step.Request.Environment["NUGET_HTTP_CACHE_PATH"]);
         });
 
         var executionWorkflow = new CommandExecutionWorkflow(
@@ -76,6 +82,7 @@ public sealed class LocalToolInstallationServiceTests
         var changes = result.Differences!.CommandFileChanges;
         Assert.Contains(new FileChange(FileChangeKind.Added, ".config/dotnet-tools.json"), changes);
         Assert.Contains(new FileChange(FileChangeKind.Added, ".config/dotnet-tools/Contoso.Tool"), changes);
+        Assert.Equal(beforeUserProfile, CliTestIsolation.CaptureUserProfileState());
     }
 
     private static IReadOnlyList<string> Values(CommandRequest request) =>
